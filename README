@@ -1,4 +1,3 @@
-Quỳnh Châu
 1. Đăng nhập, đăng kí, quên mật khẩu (chưa có đăng nhập với github)
 2. Tạo, sửa profile (chưa có tạo avt bằng AI)
 3. Xóa tài khoản, đổi mật khẩu
@@ -9,6 +8,9 @@ Quỳnh Châu
 8. Lọc (ở trang match, theo các tiêu chí tùy chọn: location, gender, occupation, interests...)
 9. Xem trang cá nhân người khác (hiển thị profile, ảnh, chi tiết compatibility, chi tiết personality của người đó)
 10. Trang cá nhân của mình 
+11. Match
+12. Dating
+13. Noti
 ---------------------------
 Cosine Similarity: https://www.geeksforgeeks.org/cosine-similarity/
 Jaccard Similarity: https://www.geeksforgeeks.org/jaccard-similarity/
@@ -21,3 +23,14 @@ npm install socket.io
 npm install socket.io-client
 npm install @nestjs/platform-socket.io
 ----------------------------
+
+ backend/.env
+DATABASE_URL="postgresql://postgres:12345@localhost:5435/newdb?schema=public"
+ACCESS_TOKEN_KEY="12345"
+REFRESH_TOKEN_KEY="54321"
+EMAIL_HOST=smtp.gmail.com
+PORT=8080
+EMAIL_PORT=587
+EMAIL_USER=lttlefrog31@gmail.com
+EMAIL_PASSWORD=pukcmwlmafwtpfoq
+GOOGLE_CLIENT_ID=664545406075-2c420600s4eh9sp7evlnkme8ri54oh09.apps.googleusercontent.com

@@ -1,0 +1,23 @@
+Quỳnh Châu
+1. Đăng nhập, đăng kí, quên mật khẩu (chưa có đăng nhập với github)
+2. Tạo, sửa profile (chưa có tạo avt bằng AI)
+3. Xóa tài khoản, đổi mật khẩu
+4. Trạng thái online, offline 
+5. Test personality (bài test big five OCEAN, vẽ biểu đồ tính cách)
+6. Đăng bài (like, cmt, sửa, xóa)
+7. Gợi ý match (ở trang dashboard, dựa trên những người có điểm compatibility cao)
+8. Lọc (ở trang match, theo các tiêu chí tùy chọn: location, gender, occupation, interests...)
+9. Xem trang cá nhân người khác (hiển thị profile, ảnh, chi tiết compatibility, chi tiết personality của người đó)
+10. Trang cá nhân của mình 
+---------------------------
+Cosine Similarity: https://www.geeksforgeeks.org/cosine-similarity/
+Jaccard Similarity: https://www.geeksforgeeks.org/jaccard-similarity/
+compatibility: dựa trên relationship goal, interests (so sánh bằng Jaccard Similarity), personality (kết quả làm test, so sánh bằng Cosine Similarity)
+
+----------------------------
+trạng thái online
+npm install @nestjs/websockets
+npm install socket.io
+npm install socket.io-client
+npm install @nestjs/platform-socket.io
+----------------------------

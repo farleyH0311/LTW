@@ -1,0 +1,167 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model users {
+  id               Int                @id @default(autoincrement())
+  email            String             @unique
+  password         String?
+  isVerified       Boolean            @default(false)
+  created_at       DateTime           @default(now())
+  updated_at       DateTime           @updatedAt
+  last_online_at   DateTime?
+  is_online        Boolean            @default(false)
+  comments         comments[]
+  connectionsA     connection[]       @relation("ConnectionA")
+  connectionsB     connection[]       @relation("ConnectionB")
+  receivedQueues   connection_queue[] @relation("QueueReceiver")
+  sentQueues       connection_queue[] @relation("QueueSender")
+  receivedDates    dating_plan[]      @relation("ReceivedDates")
+  sentDates        dating_plan[]      @relation("SentDates")
+  notifications    notification[]     @relation("UserNotifications")
+  otp              otp[]
+  personalityTests personality_test[]
+  likes            post_likes[]
+  posts            posts[]
+  profile          profile?
+}
+
+model otp {
+  id        Int      @id @default(autoincrement())
+  token     String
+  userId    Int
+  type      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      users    @relation(fields: [userId], references: [id])
+}
+
+model profile {
+  id                 Int      @id @default(autoincrement())
+  name               String
+  account_name       String   @default("default")
+  age                Int
+  gender             String
+  location           String
+  about_me           String?
+  occupation         String?
+  education          String?
+  height             Int?
+  interests          String[]
+  relationship_goals String?
+  avt                String?
+  created_at         DateTime @default(now())
+  updated_at         DateTime @updatedAt
+  userId             Int      @unique
+  user               users    @relation(fields: [userId], references: [id])
+}
+
+model posts {
+  id             Int          @id @default(autoincrement())
+  userId         Int
+  content        String
+  media_urls     String[]
+  likes_count    Int          @default(0)
+  comments_count Int          @default(0)
+  created_at     DateTime     @default(now())
+  updated_at     DateTime     @updatedAt
+  comments       comments[]
+  likes          post_likes[]
+  user           users        @relation(fields: [userId], references: [id])
+}
+
+model post_likes {
+  postId   Int
+  userId   Int
+  liked_at DateTime @default(now())
+  post     posts    @relation(fields: [postId], references: [id])
+  user     users    @relation(fields: [userId], references: [id])
+
+  @@id([postId, userId])
+}
+
+model comments {
+  id              Int        @id @default(autoincrement())
+  postId          Int
+  userId          Int
+  content         String
+  parentCommentId Int?
+  created_at      DateTime   @default(now())
+  updated_at      DateTime   @updatedAt
+  parent_comment  comments?  @relation("ReplyTo", fields: [parentCommentId], references: [id])
+  replies         comments[] @relation("ReplyTo")
+  post            posts      @relation(fields: [postId], references: [id])
+  user            users      @relation(fields: [userId], references: [id])
+}
+
+model personality_test {
+  id                Int      @id @default(autoincrement())
+  userId            Int
+  openness          Float
+  conscientiousness Float
+  extraversion      Float
+  agreeableness     Float
+  neuroticism       Float
+  created_at        DateTime @default(now())
+  user              users    @relation(fields: [userId], references: [id])
+}
+
+model connection_queue {
+  id         Int      @id @default(autoincrement())
+  senderId   Int
+  receiverId Int
+  createdAt  DateTime @default(now())
+  receiver   users    @relation("QueueReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  sender     users    @relation("QueueSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@unique([senderId, receiverId])
+  @@index([receiverId])
+}
+
+model connection {
+  id        Int      @id @default(autoincrement())
+  userAId   Int
+  userBId   Int
+  createdAt DateTime @default(now())
+  userA     users    @relation("ConnectionA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB     users    @relation("ConnectionB", fields: [userBId], references: [id], onDelete: Cascade)
+
+  @@unique([userAId, userBId])
+  @@index([userAId])
+  @@index([userBId])
+}
+
+model notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  content   String
+  url       String?
+  type      String? 
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      users    @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model dating_plan {
+  id             Int      @id @default(autoincrement())
+  title          String
+  time           DateTime
+  location       String
+  status         String   @default("pending")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  senderId       Int
+  receiverId     Int
+  receiverRating Int?
+  senderRating   Int?
+  receiver       users    @relation("ReceivedDates", fields: [receiverId], references: [id])
+  sender         users    @relation("SentDates", fields: [senderId], references: [id])
+
+  @@index([senderId])
+  @@index([receiverId])
+}

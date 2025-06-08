@@ -1,0 +1,27 @@
+{
+  "name": "nt208.p22.antt_web-application-development",
+  "version": "1.0.0",
+  "description": "Quỳnh Châu\r 1. Đăng nhập, đăng kí, quên mật khẩu (chưa có đăng nhập với github)\r 2. Tạo, sửa profile (chưa có tạo avt bằng AI)\r 3. Xóa tài khoản, đổi mật khẩu\r 4. Trạng thái online, offline \r 5. Test personality (bài test big five OCEAN, vẽ biểu đồ tính cách)\r 6. Đăng bài (like, cmt, sửa, xóa)\r 7. Gợi ý match (ở trang dashboard, dựa trên những người có điểm compatibility cao)\r 8. Lọc (ở trang match, theo các tiêu chí tùy chọn: location, gender, occupation, interests...)\r 9. Xem trang cá nhân người khác (hiển thị profile, ảnh, chi tiết compatibility, chi tiết personality của người đó)\r 10. Trang cá nhân của mình \r ---------------------------\r Cosine Similarity: https://www.geeksforgeeks.org/cosine-similarity/\r Jaccard Similarity: https://www.geeksforgeeks.org/jaccard-similarity/\r compatibility: dựa trên relationship goal, interests (so sánh bằng Jaccard Similarity), personality (kết quả làm test, so sánh bằng Cosine Similarity)",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fuondai/NT208.P22.ANTT_Web-application-development.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/fuondai/NT208.P22.ANTT_Web-application-development/issues"
+  },
+  "homepage": "https://github.com/fuondai/NT208.P22.ANTT_Web-application-development#readme",
+  "dependencies": {
+    "@nestjs/platform-socket.io": "^11.1.2",
+    "@nestjs/websockets": "^11.1.2",
+    "react-hot-toast": "^2.5.2",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1"
+  }
+}

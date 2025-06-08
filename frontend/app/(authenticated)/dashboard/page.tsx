@@ -179,7 +179,6 @@ useEffect(() => {
     });
   };
 
-
 const addToMatchedProfiles = (profile: MatchProfile) => {
   setMatchedProfiles((prev) => {
     if (prev.some((p) => p.id === profile.id)) return prev;
@@ -193,7 +192,7 @@ const handleLikeBack = async (targetId: number) => {
   const res = await sendLike(Number(senderId), targetId);
 
   if (res.matched) {
-    const profile = await getProfileByUserId(targetId); // lấy đủ thông tin
+    const profile = await getProfileByUserId(targetId); 
     setMatchedProfiles((prev) => {
       if (prev.some((p) => p.id === profile.id)) return prev;
       return [...prev, profile];
@@ -333,68 +332,64 @@ const handleLikeBack = async (targetId: number) => {
                     ))}
                   </div>
                 </TabsContent>
-<TabsContent value="liked" className="mt-6">
-  <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-    {matchedProfiles.map((profile: MatchProfile) => (
-      <MatchCard
-        key={profile.id}
-        id={profile.id}
-        name={profile.name}
-        age={profile.age}
-        location={profile.location}
-        interests={profile.interests}
-        avt={profile.avt}
-        compatibility={profile.compatibility}
-        is_online={profile.is_online}
-        last_online_at={profile.last_online_at}
-        isMatched={true}
-        onPlanDate={() =>
-          handlePlanDate(profile.id.toString(), profile.name)
-        }
-        onLikeSuccess={() =>
-          setMatchedProfiles((prev) =>
-            prev.filter((p) => p.id !== profile.id)
-          )
-        }
-      />
-    ))}
-  </div>
-</TabsContent>
-
-
+                  <TabsContent value="liked" className="mt-6">
+                    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                      {matchedProfiles.map((profile: MatchProfile) => (
+                        <MatchCard
+                          key={profile.id}
+                          id={profile.id}
+                          name={profile.name}
+                          age={profile.age}
+                          location={profile.location}
+                          interests={profile.interests}
+                          avt={profile.avt}
+                          compatibility={profile.compatibility}
+                          is_online={profile.is_online}
+                          last_online_at={profile.last_online_at}
+                          isMatched={true}
+                          onPlanDate={() =>
+                            handlePlanDate(profile.id.toString(), profile.name)
+                          }
+                          onLikeSuccess={() =>
+                            setMatchedProfiles((prev) =>
+                              prev.filter((p) => p.id !== profile.id)
+                            )
+                          }
+                        />
+                      ))}
+                    </div>
+                  </TabsContent>
                 <TabsContent value="likes-received" className="mt-6">
-  <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-    {incomingProfiles.map((profile: MatchProfile) => (
-      <MatchCard
-        key={profile.id}
-        id={profile.id}
-        name={profile.name}
-        age={profile.age}
-        location={profile.location}
-        interests={profile.interests}
-        avt={profile.avt}
-        compatibility={profile.compatibility}
-        is_online={profile.is_online}
-        last_online_at={profile.last_online_at}
-        onPlanDate={() =>
-          handlePlanDate(profile.id.toString(), profile.name)
-        }
-        onLikeSuccess={() => {
-          setIncomingProfiles((prev) =>
-            prev.filter((p) => p.id !== profile.id)
-          );
+                  <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    {incomingProfiles.map((profile: MatchProfile) => (
+                      <MatchCard
+                        key={profile.id}
+                        id={profile.id}
+                        name={profile.name}
+                        age={profile.age}
+                        location={profile.location}
+                        interests={profile.interests}
+                        avt={profile.avt}
+                        compatibility={profile.compatibility}
+                        is_online={profile.is_online}
+                        last_online_at={profile.last_online_at}
+                        onPlanDate={() =>
+                          handlePlanDate(profile.id.toString(), profile.name)
+                        }
+                        onLikeSuccess={() => {
+                          setIncomingProfiles((prev) =>
+                            prev.filter((p) => p.id !== profile.id)
+                          );
 
-          setLikedProfiles((prev: MatchProfile[]) => [...prev, profile]);
+                          setLikedProfiles((prev: MatchProfile[]) => [...prev, profile]);
 
-          setMatchedProfiles((prev: MatchProfile[]) => [...prev, profile]);
-        }}
+                          setMatchedProfiles((prev: MatchProfile[]) => [...prev, profile]);
+                        }}
 
-      />
-    ))}
-  </div>
-</TabsContent>
-
-
+                      />
+                    ))}
+                  </div>
+                </TabsContent>
                 <TabsContent value="messages" className="mt-6">
                   <div className="grid gap-4">
                     {[1, 2, 3, 4].map((i) => (
@@ -570,12 +565,11 @@ function MatchCard({
                   {compatibility}% Match
                 </span>
               </div>
-{isMatched && (
-  <Button variant="outline" size="sm" onClick={onPlanDate}>
-    Plan a Date
-  </Button>
-)}
-
+                {isMatched && (
+                  <Button variant="outline" size="sm" onClick={onPlanDate}>
+                    Plan a Date
+                  </Button>
+                )}
             </div>
           </CardContent>
         </Card>

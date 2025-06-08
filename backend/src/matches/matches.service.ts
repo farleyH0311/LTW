@@ -104,28 +104,27 @@ export class MatchesService {
           data: { userAId: senderId, userBId: receiverId },
         }),
       ]);
-const sender = await this.prisma.profile.findUnique({ where: { userId: senderId }, select: { name: true } });
-const receiver = await this.prisma.profile.findUnique({ where: { userId: receiverId }, select: { name: true } });
+    const sender = await this.prisma.profile.findUnique({ where: { userId: senderId }, select: { name: true } });
+    const receiver = await this.prisma.profile.findUnique({ where: { userId: receiverId }, select: { name: true } });
 
-const senderName = sender?.name || 'người dùng';
-const receiverName = receiver?.name || 'người dùng';
+    const senderName = sender?.name || 'người dùng';
+    const receiverName = receiver?.name || 'người dùng';
 
-// Gửi thông báo cho receiver
-await this.notificationService.create({
-  userId: receiverId,
-  content: `Bạn đã kết nối thành công với ${senderName}!`,
-  url: `/profile/${senderId}`,
-  type: 'match_success',
-});
+    // Gửi thông báo cho receiver
+    await this.notificationService.create({
+      userId: receiverId,
+      content: `Bạn đã kết nối thành công với ${senderName}!`,
+      url: `/profile/${senderId}`,
+      type: 'match_success',
+    });
 
-// Gửi thông báo cho sender
-await this.notificationService.create({
-  userId: senderId,
-  content: `Bạn đã kết nối thành công với ${receiverName}!`,
-  url: `/profile/${receiverId}`,
-  type: 'match_success',
-});
-
+    // Gửi thông báo cho sender
+    await this.notificationService.create({
+      userId: senderId,
+      content: `Bạn đã kết nối thành công với ${receiverName}!`,
+      url: `/profile/${receiverId}`,
+      type: 'match_success',
+    });
     } else {
       await this.prisma.connection_queue.create({
         data: { senderId, receiverId },

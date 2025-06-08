@@ -93,7 +93,7 @@ console.log('[debug] notifications:', res?.items || res);
         fetchMore();
     }
     }, [userId]);
-console.log('[🔥 DEBUG notifications]:', notifications);
+console.log('[ DEBUG notifications]:', notifications);
 
   return (
   <div className="max-w-2xl mx-auto py-8 px-4">

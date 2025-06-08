@@ -28,6 +28,8 @@ import {
   getUserIdByProfileId,
   getIncomingLikes,
   getSentLikes,
+  createDatingPlan,
+  sendNotification,
 } from "@../../../app/axios";
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState("matches");
@@ -44,6 +46,8 @@ export default function DashboardPage() {
   const [userName, setUserName] = useState("Guest");
   const senderId = Cookies.get("userId");
   const [likedProfiles, setLikedProfiles] = useState<MatchProfile[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const router = useRouter();
 
   interface MatchProfile {
     userId: number;
@@ -135,12 +139,46 @@ useEffect(() => {
     const handlePlanDate = (id: string, name: string) => {
       setSelectedMatchId(id);
       setSelectedMatchName(name);
+      setSelectedUserId(id); 
       setShowDatePlanner(true);
     };
 
-    const handleDatePlanned = () => {
-      if (!showDatePlanner) setShowDatePlanner(false);
+  const handleDatePlanned = async (newDate: any) => {
+    const senderId = Cookies.get("userId");
+    const receiverId = selectedMatchId;
+
+    if (!senderId || !receiverId || !newDate?.title || !newDate?.time || !newDate?.location) {
+      console.error("❌ Thiếu thông tin tạo lịch hẹn");
+      return;
+    }
+
+    const payload = {
+      title: newDate.title.trim(),
+      time: new Date(newDate.time).toISOString(),
+      location: newDate.location.trim(),
+      status: "pending",
+      senderId: Number(senderId),
+      receiverId: Number(receiverId),
     };
+
+    try {
+      await createDatingPlan(payload);
+      setShowDatePlanner(false);
+      setSelectedMatchId(null);
+      setSelectedMatchName(null);
+      router.push("/dating");
+    } catch (err) {
+      console.error("❌ Lỗi khi tạo lịch hẹn:", err);
+    }
+
+    await sendNotification({
+      userId: receiverId,
+      content: `${userName} đã mời bạn đi hẹn hò! 💌`,
+      url: `${window.location.origin}/dating`,
+      type: "date_invite",
+    });
+  };
+
 
 const addToMatchedProfiles = (profile: MatchProfile) => {
   setMatchedProfiles((prev) => {

@@ -29,7 +29,7 @@ export function NotificationBell() {
         return;
       }
       const res = await getNotificationsByUserId(userId, 1, 10);
-      setNotifications(res.items || res);
+      setNotifications(Array.isArray(res) ? res : res.items || []);
     } catch (err) {
       console.error('🚨 Lỗi khi lấy thông báo:', err);
     }

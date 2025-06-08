@@ -56,21 +56,20 @@ export function VirtualDatePlanner({ matchName, matchId, onDatePlanned, initialT
 
   const handleSubmit = () => {
     const selectedTime = new Date(dateTime);
-  if (selectedTime < new Date()) {
-    alert("⛔ Bạn không thể chọn thời gian trong quá khứ!");
-    return;
-  }
+    if (selectedTime < new Date()) {
+      alert("⛔ Bạn không thể chọn thời gian trong quá khứ!");
+      return;
+    }
     setShowConfetti(true)
- const dateDetails = {
-  title: dateType,
-  time: dateTime,
-  location: dateLocation,
-  status: "pending",
-  receiverId: Number(matchId),
-};
-
-onDatePlanned?.(dateDetails);
-setShowConfetti(true);
+    const dateDetails = {
+      title: dateType,
+      time: dateTime,
+      location: dateLocation,
+      status: "pending",
+      receiverId: Number(matchId),
+    };
+    onDatePlanned?.(dateDetails);
+    setShowConfetti(true);
   };
 
   const dateTypes = [
@@ -96,36 +95,53 @@ setShowConfetti(true);
 
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-<TabsList className={`grid w-full ${initialTitle ? "grid-cols-3" : "grid-cols-4"}`}>
-  {!initialTitle && (
-    <TabsTrigger value="type">{t("datePlanner.type")}</TabsTrigger>
-  )}
-  <TabsTrigger value="details">{t("datePlanner.details")}</TabsTrigger>
-  <TabsTrigger value="message">{t("datePlanner.message")}</TabsTrigger>
-  <TabsTrigger value="confirm">{t("datePlanner.confirm")}</TabsTrigger>
-</TabsList>
-
-
+        <TabsList className={`grid w-full ${initialTitle ? "grid-cols-3" : "grid-cols-4"}`}>
+          {!initialTitle && (
+            <TabsTrigger value="type">{t("datePlanner.type")}</TabsTrigger>
+          )}
+          <TabsTrigger value="details">{t("datePlanner.details")}</TabsTrigger>
+          <TabsTrigger value="message">{t("datePlanner.message")}</TabsTrigger>
+          <TabsTrigger value="confirm">{t("datePlanner.confirm")}</TabsTrigger>
+        </TabsList>
           <TabsContent value="type" className="space-y-4 pt-4">
             <div className="space-y-4">
               <h3 className="font-medium text-lg">{t("datePlanner.selectType")}</h3>
 
-              <RadioGroup value={dateType} onValueChange={setDateType}>
-                {dateTypes.map((type) => (
-                  <div
-                    key={type.id}
-                    className="flex items-center space-x-2 border rounded-lg p-3 cursor-pointer hover:bg-muted"
-                  >
-                    <RadioGroupItem value={type.id} id={type.id} className="sr-only" />
-                    <Label htmlFor={type.id} className="flex items-center gap-3 cursor-pointer flex-1">
-                      <div className="rounded-full bg-primary/10 p-2">
-                        <type.icon className="h-5 w-5 text-primary" />
-                      </div>
-                      <span>{type.label}</span>
-                    </Label>
-                  </div>
-                ))}
-              </RadioGroup>
+<RadioGroup value={dateType} onValueChange={setDateType}>
+  {dateTypes.map((type) => {
+    const isSelected = dateType === type.id;
+
+    return (
+      <div
+        key={type.id}
+        className={`flex items-center space-x-2 border rounded-lg p-3 cursor-pointer transition 
+          ${isSelected ? "bg-primary text-white" : "hover:bg-muted"}`}
+      >
+        <RadioGroupItem value={type.id} id={type.id} className="sr-only" />
+        <Label
+          htmlFor={type.id}
+          className={`flex items-center gap-3 cursor-pointer flex-1 ${
+            isSelected ? "text-white" : ""
+          }`}
+        >
+          <div
+            className={`rounded-full p-2 ${
+              isSelected ? "bg-white/20" : "bg-primary/10"
+            }`}
+          >
+            <type.icon
+              className={`h-5 w-5 ${
+                isSelected ? "text-white" : "text-primary"
+              }`}
+            />
+          </div>
+          <span>{type.label}</span>
+        </Label>
+      </div>
+    );
+  })}
+</RadioGroup>
+
             </div>
 
             <div className="flex justify-end">

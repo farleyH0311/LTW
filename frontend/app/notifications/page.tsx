@@ -86,19 +86,6 @@ console.log('[debug] notifications:', res?.items || res);
     }
   };
 
-  const handleMarkDisplayedAsRead = async () => {
-    const unreadIds = notifications
-      .filter(n => !n.isRead && (!showUnreadOnly || (showUnreadOnly && !n.isRead)))
-      .map(n => n.id);
-
-    for (const id of unreadIds) {
-      await markNotificationAsRead(id);
-    }
-    setNotifications((prev) =>
-      prev.map(n => (unreadIds.includes(n.id) ? { ...n, isRead: true } : n))
-    );
-  };
-
     useEffect(() => {
     if (userId) {
         setPage(1);
@@ -127,12 +114,6 @@ console.log('[🔥 DEBUG notifications]:', notifications);
           className="text-sm text-blue-500 hover:underline"
         >
           Đánh dấu tất cả là đã đọc
-        </button>
-        <button
-          onClick={handleMarkDisplayedAsRead}
-          className="text-sm text-blue-500 hover:underline"
-        >
-          Đánh dấu các thông báo đang hiển thị là đã đọc
         </button>
         <label className="flex items-center gap-2 text-sm text-muted-foreground">
           <input

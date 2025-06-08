@@ -201,8 +201,11 @@ const handleDatePlanned = async (newDate: any) => {
 };
 
 const handleUpdateDateStatus = async (dateId: number, status: "confirmed" | "rejected") => {
+  const userId = Cookies.get("userId");
+  if (!userId) return;
+
   try {
-    await updateDateStatus(dateId, status);
+    await updateDateStatus(dateId, status, Number(userId));
     await fetchPlannedDates();
   } catch (err: any) {
     console.error("❌ Lỗi khi cập nhật trạng thái:", err.response?.data || err.message);

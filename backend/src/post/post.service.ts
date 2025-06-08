@@ -161,61 +161,37 @@ export class PostsService {
     }
   }
 
-  async createComment(userId: number, body: CreateCommentDto) {
-    const postId = Number(body.postId);
+    //cmt
+    async createComment(userId: number, body: CreateCommentDto) {
+      const postId = Number(body.postId);
 
-    if (isNaN(postId)) {
-      throw new BadRequestException('postId must be a valid number');
-    }
+      if (isNaN(postId)) {
+        throw new BadRequestException('postId must be a valid number');
+      }
 
-    if (!body.content?.trim()) {
-      throw new BadRequestException('Nội dung bình luận không được để trống');
-    }
-
-    const comment = await this.prisma.comments.create({
-      data: {
-        userId,
-        postId,
-        content: body.content,
-        parentCommentId: body.parentCommentId || null,
-      },
-      include: {
-        user: true,
-      },
-    });
-
-    await this.prisma.posts.update({
-      where: { id: postId },
-      data: {
-        comments_count: {
-          increment: 1,
+      const comment = await this.prisma.comments.create({
+        data: {
+          userId,
+          postId: postId,
+          content: body.content,
+          parentCommentId: body.parentCommentId || null,
         },
-      },
-    });
-
-    const post = await this.prisma.posts.findUnique({
-      where: { id: postId },
-      select: { userId: true },
-    });
-
-    const commenter = await this.prisma.profile.findUnique({
-      where: { userId },
-      select: { name: true },
-    });
-
-    const name = commenter?.name || 'Người dùng';
-
-    if (post && post.userId !== userId) {
-      await this.notificationService.create({
-        userId: post.userId,
-        content: `${name} đã bình luận bài viết của bạn.`,
-        url: `/posts/${postId}`,
-        type: 'comment_post',
+        include: {
+          user: true,
+        },
       });
-    }
 
-    return comment;
-  }
+      await this.prisma.posts.update({
+        where: { id: postId },
+        data: {
+          comments_count: {
+            increment: 1,
+          },
+        },
+      });
+
+      return comment;
+    }
 
   async getCommentsByPost(postId: number) {
     return await this.prisma.comments.findMany({
@@ -364,34 +340,42 @@ export class PostsService {
   }
 
   async updateComment(
-  userId: number,
-  commentId: number,
-  body: UpdateCommentDto,
-) {
-  const comment = await this.prisma.comments.findUnique({
-    where: { id: commentId },
-    include: { post: true },
-  });
+      userId: number,
+      commentId: number,
+      body: UpdateCommentDto,
+    ) {
+      const commentIdNumber = Number(commentId);
+      if (isNaN(commentId)) {
+        throw new BadRequestException('ID bình luận không hợp lệ');
+      }
 
-  if (!comment) {
-    throw new NotFoundException('Không tìm thấy bình luận');
+      const comment = await this.prisma.comments.findUnique({
+        where: { id: commentIdNumber },
+        include: {
+          post: true,
+        },
+      });
+      if (!comment) {
+        throw new NotFoundException('Không tìm thấy bình luận');
+      }
+
+      if (comment.userId !== userId) {
+        throw new ForbiddenException(
+          'Bạn không có quyền chỉnh sửa bình luận này',
+        );
+      }
+
+      const updatedComment = await this.prisma.comments.update({
+        where: { id: commentIdNumber },
+        data: {
+          content: body.content,
+          updated_at: new Date(),
+        },
+      });
+
+      return {
+        message: 'Đã cập nhật bình luận thành công',
+        comment: updatedComment,
+      };
+    }
   }
-
-  if (comment.userId !== userId) {
-    throw new ForbiddenException('Bạn không có quyền chỉnh sửa bình luận này');
-  }
-
-  const updatedComment = await this.prisma.comments.update({
-    where: { id: commentId },
-    data: {
-      content: body.content,
-      updated_at: new Date(),
-    },
-  });
-
-  return {
-    message: 'Đã cập nhật bình luận thành công',
-    comment: updatedComment,
-  };
-}
-}

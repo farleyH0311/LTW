@@ -250,7 +250,6 @@ export const createComment = async (
     throw error;
   }
 };
-
 export const getCommentsByPost = async (postId) => {
   try {
     const res = await instance.get(`/api/posts/${postId}/comments`);
@@ -591,10 +590,10 @@ export const getMyDatingPlans = async (userId) => {
   }
 };
 
-export const updateDateStatus = async (dateId, status) => {
-  try {
-    const response = await instance.patch(`/api/dating/${dateId}`, { status });
-    return response.data;
+export const updateDateStatus = async (dateId, status, userId) => {
+  try{
+  const response = await instance.patch(`/api/dating/${dateId}?userId=${userId}`, { status });
+  return response.data;
   } catch (error) {
     console.error('Error updating date status:', error);
     throw error;
@@ -645,3 +644,19 @@ export const markAllNotificationsAsRead = async (userId) => {
     throw error;
   }
 };
+
+export const sendNotification = async ({ userId, content, url = "", type = "info" }) => {
+  try {
+    const res = await instance.post("/api/notifications", {
+      userId,
+      content,
+      url,
+      type,
+    });
+    return res.data;
+  } catch (error) {
+    console.error("Lỗi khi gửi thông báo:", error.response?.data || error.message);
+    throw error;
+  }
+};
+

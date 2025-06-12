@@ -12,7 +12,10 @@ import { PersonalityTestModule } from './personality-test/personality-test.modul
 import { MatchesModule } from './matches/matches.module';
 import { NotificationModule } from './notification/notification.module';
 import { DatingModule } from './dating/dating.module';
-
+import { ChatModule } from './chat/chat.module';
+import { VertexModule } from './vertex/vertex.module';
+import { DatingAdviceModule } from './suggest/dating-advice.module';
+import { CareScoreModule } from './suggest/care-score.module';
 @Module({
   imports: [
     ConfigModule.forRoot(),
@@ -22,7 +25,10 @@ import { DatingModule } from './dating/dating.module';
     PersonalityTestModule,
     MatchesModule,
     NotificationModule,
-    DatingModule,
+    DatingAdviceModule,
+    ChatModule,
+    VertexModule,
+    CareScoreModule,
   ],
   controllers: [AppController, PostsController],
   providers: [AppService, PostsService, PrismaService],

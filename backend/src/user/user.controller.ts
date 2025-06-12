@@ -44,6 +44,13 @@ export class UserController {
     //console.log('get profile api=> ', id);
     return this.userService.getProfileByIdProfile(id);
   }
+  @Get(':id/friends')
+  async getFriends(@Param('id', ParseIntPipe) userId: number) {
+  const friends = await this.userService.getFriends(userId);
+  return friends; // Trả về array JSON an toàn
+}
+
+
   @Put(':id/profile')
   async updateProfile(
     @Param('id', ParseIntPipe) id: number,

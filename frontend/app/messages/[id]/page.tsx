@@ -1,172 +1,137 @@
-"use client"
+"use client";
 
-import type React from "react"
+import { useState, useRef, useEffect } from "react";
+import { useParams } from "next/navigation";
+import { Paperclip, Send, ImageIcon, Mic, Video, Phone } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useLanguage } from "@/components/language-provider";
+import { ChatSuggestion } from "@/components/ChatSuggestion";
+import { AnimatedGradientBorder } from "@/components/ui-effects/animated-gradient-border";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { instance } from "@/app/axios";
 
-import { useState, useRef, useEffect } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { Paperclip, Send, ImageIcon, Mic, Video, Phone } from "lucide-react"
+interface Message {
+  id: number;
+  senderId: number;
+  content: string;
+  timestamp: string;
+  sender: {
+    id: number;
+    email: string;
+    profile?: {
+      name?: string;
+    };
+  };
+}
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { useLanguage } from "@/components/language-provider"
-import { AnimatedGradientBorder } from "@/components/ui-effects/animated-gradient-border"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+export default function ChatDetailPage() {
+  const { id } = useParams();
+  const otherUserId = parseInt(id as string);
+  const { t } = useLanguage();
+  const [message, setMessage] = useState("");
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [conversation, setConversation] = useState<any>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [isCallDialogOpen, setIsCallDialogOpen] = useState(false);
+  const [isVideoCall, setIsVideoCall] = useState(false);
+  const [callStatus, setCallStatus] = useState<"connecting" | "ringing" | "ongoing" | "ended">("connecting");
+  const [callDuration, setCallDuration] = useState(0);
 
-export default function ChatDetailPage({ params }: { params: { id: string } }) {
-  const router = useRouter()
-  const { t } = useLanguage()
-  const [message, setMessage] = useState("")
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-  const [isCallDialogOpen, setIsCallDialogOpen] = useState(false)
-  const [isVideoCall, setIsVideoCall] = useState(false)
-  const [callStatus, setCallStatus] = useState<"connecting" | "ringing" | "ongoing" | "ended">("connecting")
-  const [callDuration, setCallDuration] = useState(0)
+  useEffect(() => {
+    instance.get(`/api/users/${otherUserId}`)
+      .then(({ data }) => {
+        setConversation({
+          id: data.id,
+          name: data.profile?.name ?? data.username ?? `User ${data.id}`,
+          avatar: data.profile?.avatar,
+          online: data.online,
+          lastSeen: data.lastSeen ?? "recently",
+        });
+      })
+      .catch(() => setConversation({ name: "Unknown", avatar: undefined, online: false, lastSeen: "-" }));
 
-  // Sample conversation data
-  const conversation = {
-    id: Number.parseInt(params.id),
-    name: ["Sarah Johnson", "Michael Chen", "Emma Wilson", "David Kim", "Sophia Martinez"][
-      Number.parseInt(params.id) - 1
-    ],
-    avatar: `/placeholder.svg?height=40&width=40&text=${["SJ", "MC", "EW", "DK", "SM"][Number.parseInt(params.id) - 1]}`,
-    online: [true, true, false, false, false][Number.parseInt(params.id) - 1],
-    lastSeen: ["Just now", "Just now", "3 hours ago", "Yesterday", "2 days ago"][Number.parseInt(params.id) - 1],
-  }
+    instance.get(`/api/chat/${otherUserId}/messages`)
+      .then(({ data }) => setMessages(data))
+      .catch(console.error);
+  }, [otherUserId]);
 
-  // Sample messages
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      sender: "them",
-      text: "Hey there! I noticed we have a 92% compatibility score. That's pretty impressive!",
-      time: "10:30 AM",
-    },
-    {
-      id: 2,
-      sender: "me",
-      text: "Hi! Yes, I was surprised by that too. Harmonia's AI seems to know what it's doing!",
-      time: "10:35 AM",
-    },
-    {
-      id: 3,
-      sender: "them",
-      text: "Definitely! I see we both love hiking and trying new restaurants. Any favorite trails or spots you'd recommend?",
-      time: "10:38 AM",
-    },
-    {
-      id: 4,
-      sender: "me",
-      text: "I love the Cascade Falls trail for hiking - the views are amazing! For restaurants, there's this new fusion place downtown called Harmony Kitchen that's fantastic.",
-      time: "10:42 AM",
-    },
-    {
-      id: 5,
-      sender: "them",
-      text: "Cascade Falls is on my list! And I've heard good things about Harmony Kitchen too. Would you maybe want to check it out together sometime?",
-      time: "10:45 AM",
-    },
-  ])
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const handleSendMessage = () => {
-    if (!message.trim()) return
-
-    const newMessage = {
-      id: messages.length + 1,
-      sender: "me",
-      text: message,
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-    }
-
-    setMessages([...messages, newMessage])
-    setMessage("")
-  }
+    if (!message.trim()) return;
+    instance.post(`/api/chat/${otherUserId}/messages`, { content: message })
+      .then(() => instance.get(`/api/chat/${otherUserId}/messages`))
+      .then(({ data }) => {
+        setMessages(data);
+        setMessage("");
+      })
+      .catch(console.error);
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      handleSendMessage()
+      e.preventDefault();
+      handleSendMessage();
     }
-  }
+  };
 
-  // Auto-scroll to bottom when messages change
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [messages])
-
-  // Simulate receiving a message after 5 seconds
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const newMessage = {
-        id: messages.length + 1,
-        sender: "them",
-        text: "By the way, I noticed you're into photography too. I'd love to see some of your work!",
-        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      }
-
-      setMessages((prev) => [...prev, newMessage])
-    }, 5000)
-
-    return () => clearTimeout(timer)
-  }, [])
-
-  // Handle call functionality
   const startCall = (video: boolean) => {
-    setIsVideoCall(video)
-    setIsCallDialogOpen(true)
-    setCallStatus("connecting")
-
-    // Simulate call connection
+    setIsVideoCall(video);
+    setIsCallDialogOpen(true);
+    setCallStatus("connecting");
     setTimeout(() => {
-      setCallStatus("ringing")
-
+      setCallStatus("ringing");
       setTimeout(() => {
-        setCallStatus("ongoing")
-
-        // Start call duration timer
-        const durationInterval = setInterval(() => {
-          setCallDuration((prev) => prev + 1)
-        }, 1000)
-
-        return () => clearInterval(durationInterval)
-      }, 2000)
-    }, 1000)
-  }
+        setCallStatus("ongoing");
+        const interval = setInterval(() => setCallDuration((p) => p + 1), 1000);
+        return () => clearInterval(interval);
+      }, 2000);
+    }, 1000);
+  };
 
   const endCall = () => {
-    setCallStatus("ended")
+    setCallStatus("ended");
     setTimeout(() => {
-      setIsCallDialogOpen(false)
-      setCallDuration(0)
-    }, 1000)
-  }
+      setIsCallDialogOpen(false);
+      setCallDuration(0);
+    }, 1000);
+  };
 
   const formatCallDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
-  }
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)]">
-      {/* Chat Header */}
+      {/* Header */}
       <div className="flex items-center gap-3 p-3 border-b">
         <div className="relative">
           <Avatar>
-            <AvatarImage src={conversation.avatar} alt={conversation.name} />
-            <AvatarFallback>{conversation.name[0]}</AvatarFallback>
+            <AvatarImage src={conversation?.avatar} alt={conversation?.name} />
+            <AvatarFallback>{conversation?.name?.[0]}</AvatarFallback>
           </Avatar>
-          {conversation.online && (
+          {conversation?.online && (
             <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 ring-2 ring-background"></span>
           )}
         </div>
 
         <div className="flex-1">
-          <p className="font-medium">{conversation.name}</p>
+          <p className="font-medium">{conversation?.name}</p>
           <p className="text-xs text-muted-foreground">
-            {conversation.online ? "Online" : `Last seen ${conversation.lastSeen}`}
+            {conversation?.online ? "Online" : `Last seen ${conversation?.lastSeen}`}
           </p>
         </div>
 
@@ -177,67 +142,59 @@ export default function ChatDetailPage({ params }: { params: { id: string } }) {
           <Button variant="ghost" size="icon" onClick={() => startCall(true)}>
             <Video className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon" asChild>
-            <Link href={`/users/${params.id}`}>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-5 w-5"
-              >
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="16" x2="12" y2="12"></line>
-                <line x1="12" y1="8" x2="12.01" y2="8"></line>
-              </svg>
-            </Link>
-          </Button>
         </div>
       </div>
 
-      {/* Messages */}
+      {/* Message List */}
       <ScrollArea className="flex-1 p-4">
         <div className="space-y-4">
-          {messages.map((msg) => (
-            <div key={msg.id} className={`flex ${msg.sender === "me" ? "justify-end" : "justify-start"}`}>
-              {msg.sender === "them" && (
-                <Avatar className="mr-2 h-8 w-8">
-                  <AvatarImage src={conversation.avatar} alt={conversation.name} />
-                  <AvatarFallback>{conversation.name[0]}</AvatarFallback>
-                </Avatar>
-              )}
+          {messages.map((msg) => {
+            const isMe = conversation && msg.senderId === conversation.id;
+            const senderName = msg.sender?.profile?.name ?? `User ${msg.senderId}`;
 
+            return (
               <div
-                className={`max-w-[70%] rounded-lg px-4 py-2 ${
-                  msg.sender === "me" ? "bg-primary text-primary-foreground" : "bg-muted"
-                }`}
+                key={msg.id}
+                className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
               >
-                <p className="whitespace-pre-wrap">{msg.text}</p>
-                <p className="mt-1 text-right text-xs opacity-70">{msg.time}</p>
+                {!isMe && (
+                  <p className="text-sm text-muted-foreground mb-1 ml-1">
+                    {senderName}
+                  </p>
+                )}
+                <div
+                  className={`max-w-[70%] rounded-lg px-4 py-2 ${
+                    isMe ? "bg-primary text-primary-foreground" : "bg-muted"
+                  }`}
+                >
+                  <p className="whitespace-pre-wrap">{msg.content}</p>
+                  <p className="mt-1 text-right text-xs opacity-70">
+                    {new Date(msg.timestamp).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
           <div ref={messagesEndRef} />
         </div>
       </ScrollArea>
 
-      {/* Message Input */}
+      {/* ✅ Chat Suggestion Hiển thị ngay dưới message list */}
+      <ChatSuggestion
+        lastMessage={messages.at(-1)?.content ?? ""}
+        senderName={conversation?.name ?? ""}
+        onSelect={(text) => setMessage(text)}
+      />
+
+      {/* Input */}
       <div className="border-t p-3">
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon">
-            <Paperclip className="h-5 w-5" />
-          </Button>
-          <Button variant="ghost" size="icon">
-            <ImageIcon className="h-5 w-5" />
-          </Button>
-          <Button variant="ghost" size="icon">
-            <Mic className="h-5 w-5" />
-          </Button>
+          <Button variant="ghost" size="icon"><Paperclip className="h-5 w-5" /></Button>
+          <Button variant="ghost" size="icon"><ImageIcon className="h-5 w-5" /></Button>
+          <Button variant="ghost" size="icon"><Mic className="h-5 w-5" /></Button>
 
           <Input
             placeholder={t("chat.typeMessage")}
@@ -260,7 +217,7 @@ export default function ChatDetailPage({ params }: { params: { id: string } }) {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {isVideoCall ? "Video Call" : "Voice Call"} with {conversation.name}
+              {isVideoCall ? "Video Call" : "Voice Call"} with {conversation?.name}
             </DialogTitle>
             <DialogDescription>
               {callStatus === "connecting" && "Connecting..."}
@@ -272,8 +229,8 @@ export default function ChatDetailPage({ params }: { params: { id: string } }) {
 
           <div className="flex flex-col items-center justify-center p-6">
             <Avatar className="h-24 w-24 mb-4">
-              <AvatarImage src={conversation.avatar} alt={conversation.name} />
-              <AvatarFallback>{conversation.name[0]}</AvatarFallback>
+              <AvatarImage src={conversation?.avatar} alt={conversation?.name} />
+              <AvatarFallback>{conversation?.name?.[0]}</AvatarFallback>
             </Avatar>
 
             {isVideoCall && callStatus === "ongoing" && (
@@ -295,7 +252,6 @@ export default function ChatDetailPage({ params }: { params: { id: string } }) {
                   )}
                 </>
               )}
-
               <Button variant="destructive" size="icon" className="rounded-full h-12 w-12" onClick={endCall}>
                 <Phone className="h-6 w-6" />
               </Button>
@@ -304,6 +260,5 @@ export default function ChatDetailPage({ params }: { params: { id: string } }) {
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }
-

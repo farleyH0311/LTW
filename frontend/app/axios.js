@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const instance = axios.create({
-  baseURL: "http://localhost:8080",
+  baseURL: "http://localhost:3333",
   headers: {
     "Content-Type": "application/json",
   },
@@ -87,6 +87,26 @@ export const addProfile = async (id, profileData) => {
     return response.data;
   } catch (error) {
     console.error("Error adding profile:", error);
+    throw error;
+  }
+};
+
+export const getMessages = async (userId) => {
+  try {
+    const response = await instance.get(`/api/chat/${userId}/messages`);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi lấy tin nhắn:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const sendMessage = async (userId, content) => {
+  try {
+    const response = await instance.post(`/api/chat/${userId}/messages`, { content });
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi gửi tin nhắn:", error.response?.data || error.message);
     throw error;
   }
 };
@@ -659,4 +679,5 @@ export const sendNotification = async ({ userId, content, url = "", type = "info
     throw error;
   }
 };
-
+export { instance };
+export { axios };

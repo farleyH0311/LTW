@@ -1,169 +1,321 @@
-"use client"
+"use client";
 
-import type React from "react"
+import { useState, useRef, useEffect, useCallback } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { jwtDecode } from "jwt-decode";
+import {
+  Sparkles,
+  Phone,
+  Video,
+  Info,
+  Paperclip,
+  Send,
+  ImageIcon,
+  Mic,
+  ArrowLeft,
+} from "lucide-react";
 
-import { useState } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { Search, Home } from "lucide-react"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { useLanguage } from "@/components/language-provider";
+import { MainNav } from "@/components/main-nav";
+import { MobileNav } from "@/components/mobile-nav";
+import { AnimatedGradientBorder } from "@/components/ui-effects/animated-gradient-border";
+import { instance } from "@/app/axios";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { useLanguage } from "@/components/language-provider"
+interface Message {
+  id: number;
+  senderId: number;
+  content: string;
+  timestamp: string;
+}
 
-export default function ChatPage() {
-  const router = useRouter()
-  const { t } = useLanguage()
-  const [searchQuery, setSearchQuery] = useState("")
+interface DecodedToken {
+  userId: number;
+  exp?: number;
+}
 
-  const conversations = [
-    {
-      id: 1,
-      name: "Sarah Johnson",
-      avatar: "/placeholder.svg?height=40&width=40&text=SJ",
-      lastMessage: "I'd love to try that hiking trail you mentioned!",
-      time: "2m ago",
-      unread: 2,
-      online: true,
-    },
-    {
-      id: 2,
-      name: "Michael Chen",
-      avatar: "/placeholder.svg?height=40&width=40&text=MC",
-      lastMessage: "Looking forward to our coffee date tomorrow!",
-      time: "1h ago",
-      unread: 0,
-      online: true,
-    },
-    {
-      id: 3,
-      name: "Emma Wilson",
-      avatar: "/placeholder.svg?height=40&width=40&text=EW",
-      lastMessage: "That movie recommendation was perfect, thanks!",
-      time: "3h ago",
-      unread: 0,
-      online: false,
-    },
-    {
-      id: 4,
-      name: "David Kim",
-      avatar: "/placeholder.svg?height=40&width=40&text=DK",
-      lastMessage: "I'll send you the details for the concert.",
-      time: "Yesterday",
-      unread: 0,
-      online: false,
-    },
-    {
-      id: 5,
-      name: "Sophia Martinez",
-      avatar: "/placeholder.svg?height=40&width=40&text=SM",
-      lastMessage: "Our compatibility score was so accurate!",
-      time: "2d ago",
-      unread: 0,
-      online: false,
-    },
-  ]
+export default function ChatDetailPage() {
+  const router = useRouter();
+  const { t } = useLanguage();
+  const params = useParams();
+  const otherUserId = parseInt(params?.id as string);
 
-  const filteredConversations = conversations.filter((convo) =>
-    convo.name.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
+  const [message, setMessage] = useState("");
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const handleSelectChat = (id: number) => {
-    router.push(`/chat/${id}`)
-  }
+  // Safely get and decode token
+  const getAuthData = useCallback(() => {
+    try {
+      if (typeof window === "undefined") return { accessToken: null, currentUserId: null };
+      
+      const accessToken = localStorage.getItem("accessToken");
+      if (!accessToken) return { accessToken: null, currentUserId: null };
+
+      const decoded = jwtDecode<DecodedToken>(accessToken);
+      
+      // Check if token is expired
+      if (decoded.exp && decoded.exp * 1000 < Date.now()) {
+        localStorage.removeItem("accessToken");
+        router.push("/login");
+        return { accessToken: null, currentUserId: null };
+      }
+
+      return { accessToken, currentUserId: decoded.userId };
+    } catch (error) {
+      console.error("Token decode error:", error);
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("accessToken");
+      }
+      router.push("/login");
+      return { accessToken: null, currentUserId: null };
+    }
+  }, [router]);
+
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, []);
+
+  const fetchMessages = useCallback(async () => {
+    const { accessToken } = getAuthData();
+    if (!accessToken || !otherUserId || isNaN(otherUserId)) return;
+
+    try {
+      setError(null);
+      const res = await instance.get(`/api/chat/${otherUserId}/messages`);
+      setMessages(res.data);
+      setTimeout(scrollToBottom, 100); // Small delay to ensure DOM is updated
+    } catch (error: any) {
+      console.error("Fetch messages failed:", error);
+      setError(error?.response?.data?.message || "Failed to fetch messages");
+      
+      // Handle auth errors
+      if (error?.response?.status === 401) {
+        localStorage.removeItem("accessToken");
+        router.push("/login");
+      }
+    }
+  }, [otherUserId, getAuthData, scrollToBottom, router]);
+
+  const sendMessage = async () => {
+    if (!message.trim()) return;
+    
+    const { accessToken } = getAuthData();
+    if (!accessToken) return;
+
+    setLoading(true);
+    try {
+      setError(null);
+      const res = await instance.post(`/api/chat/${otherUserId}/messages`, {
+        content: message.trim(),
+      });
+      
+      setMessages((prev) => [...prev, res.data]);
+      setMessage("");
+      setTimeout(scrollToBottom, 100);
+    } catch (error: any) {
+      console.error("Send message failed:", error);
+      setError(error?.response?.data?.message || "Failed to send message");
+      
+      if (error?.response?.status === 401) {
+        localStorage.removeItem("accessToken");
+        router.push("/login");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
+  const handleStartCall = (video: boolean) => {
+    router.push(`/calls/${otherUserId}?video=${video}`);
+  };
+
+  // Initialize and setup polling
+  useEffect(() => {
+    if (!otherUserId || isNaN(otherUserId)) {
+      router.push("/chat");
+      return;
+    }
+
+    // Initial fetch
+    fetchMessages();
+
+    // Setup polling
+    intervalRef.current = setInterval(fetchMessages, 3000);
+
+    // Cleanup
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [otherUserId, fetchMessages, router]);
+
+  // Check auth on mount
+  useEffect(() => {
+    const { accessToken } = getAuthData();
+    if (!accessToken) {
+      router.push("/login");
+    }
+  }, [getAuthData, router]);
+
+  const { currentUserId } = getAuthData();
 
   return (
-    <main className="flex-1 flex flex-col md:flex-row">
-      {/* Conversation List */}
-      <div className="w-full md:w-80 border-r">
-        <div className="p-4 border-b">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder={t("chat.searchConversations")}
-              className="pl-9"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+    <div className="flex min-h-screen flex-col">
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-16 items-center">
+          <div className="flex items-center gap-2 mr-4">
+            <Sparkles className="h-6 w-6 text-primary" />
+            <span className="text-xl font-semibold">Harmonia</span>
           </div>
-          <Button variant="outline" size="sm" className="w-full mt-3 gap-2" asChild>
-            <Link href="/feed">
-              <Home className="h-4 w-4" />
-              <span>{t("nav.feed")}</span>
-            </Link>
-          </Button>
-        </div>
 
-        <ScrollArea className="h-[calc(100vh-8rem)]">
-          {filteredConversations.map((convo) => (
-            <div
-              key={convo.id}
-              className="flex items-center gap-3 p-3 hover:bg-muted/50 cursor-pointer"
-              onClick={() => handleSelectChat(convo.id)}
+          <div className="hidden md:flex flex-1">
+            <MainNav />
+          </div>
+
+          <div className="flex items-center gap-4 ml-auto">
+            <ThemeToggle />
+            <LanguageSwitcher />
+            <Avatar>
+              <AvatarImage src="/placeholder.svg?height=32&width=32" alt="User" />
+              <AvatarFallback>JD</AvatarFallback>
+            </Avatar>
+          </div>
+        </div>
+      </header>
+
+      <MobileNav className="md:hidden" />
+
+      <main className="flex-1 flex flex-col">
+        {/* Chat Header */}
+        <div className="flex items-center gap-3 p-3 border-b">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="md:hidden" 
+            onClick={() => router.push("/chat")}
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+
+          <div className="flex-1">
+            <p className="font-medium">Chat with User #{otherUserId}</p>
+            {error && (
+              <p className="text-sm text-destructive">{error}</p>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => handleStartCall(false)}
+              disabled={loading}
             >
-              <div className="relative">
-                <Avatar>
-                  <AvatarImage src={convo.avatar} alt={convo.name} />
-                  <AvatarFallback>{convo.name[0]}</AvatarFallback>
-                </Avatar>
-                {convo.online && (
-                  <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 ring-2 ring-background"></span>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-baseline">
-                  <p className="font-medium truncate">{convo.name}</p>
-                  <p className="text-xs text-muted-foreground">{convo.time}</p>
-                </div>
-                <div className="flex justify-between items-center">
-                  <p className="text-sm text-muted-foreground truncate">{convo.lastMessage}</p>
-                  {convo.unread > 0 && (
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground">
-                      {convo.unread}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-        </ScrollArea>
-      </div>
-
-      {/* Empty State */}
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="text-center max-w-md">
-          <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-            <MessageCircle className="h-8 w-8 text-primary" />
+              <Phone className="h-5 w-5" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => handleStartCall(true)}
+              disabled={loading}
+            >
+              <Video className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" size="icon" asChild>
+              <a href={`/profile/${otherUserId}`}>
+                <Info className="h-5 w-5" />
+              </a>
+            </Button>
           </div>
-          <h2 className="text-xl font-semibold mb-2">{t("chat.selectConversation")}</h2>
-          <p className="text-muted-foreground mb-6">{t("chat.selectConversationDesc")}</p>
-          <Button asChild>
-            <Link href="/matches">{t("matches.title")}</Link>
-          </Button>
         </div>
-      </div>
-    </main>
-  )
-}
 
-function MessageCircle(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-    </svg>
-  )
-}
+        {/* Messages */}
+        <ScrollArea className="flex-1 p-4">
+          <div className="space-y-4">
+            {messages.length === 0 && !error ? (
+              <div className="text-center text-muted-foreground py-8">
+                <p>No messages yet. Start the conversation!</p>
+              </div>
+            ) : (
+              messages.map((msg) => (
+                <div 
+                  key={msg.id} 
+                  className={`flex ${msg.senderId === currentUserId ? "justify-end" : "justify-start"}`}
+                >
+                  <div
+                    className={`max-w-[70%] rounded-lg px-4 py-2 whitespace-pre-wrap ${
+                      msg.senderId === currentUserId 
+                        ? "bg-primary text-primary-foreground" 
+                        : "bg-muted"
+                    }`}
+                  >
+                    <p>{msg.content}</p>
+                    <p className="mt-1 text-right text-xs opacity-70">
+                      {new Date(msg.timestamp).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+        </ScrollArea>
 
+        {/* Message Input */}
+        <div className="border-t p-3">
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" disabled={loading}>
+              <Paperclip className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" size="icon" disabled={loading}>
+              <ImageIcon className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" size="icon" disabled={loading}>
+              <Mic className="h-5 w-5" />
+            </Button>
+
+            <Input
+              placeholder={t("chat.typeMessage")}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="flex-1"
+              disabled={loading}
+            />
+
+            <AnimatedGradientBorder className={(!message.trim() || loading) ? "opacity-50" : ""}>
+              <Button 
+                size="icon" 
+                onClick={sendMessage} 
+                disabled={!message.trim() || loading}
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </AnimatedGradientBorder>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}

@@ -172,6 +172,17 @@ export class AuthController {
     await this.authService.resetPassword(email, newPassword);
     return { message: 'Password has been updated successfully' };
   }
+
+  @UseGuards(AccessTokenGuard)
+@Get('me')
+getMe(@Req() req) {
+  const user = req.user;
+  if (!user || !user.id) {
+    throw new UnauthorizedException('Không xác định được người dùng.');
+  }
+  return { userId: user.id };
+}
+
   @UseGuards(AccessTokenGuard)
   @Patch('change-password')
   async changePassword(@Req() req, @Body() dto: ChangePasswordDto) {

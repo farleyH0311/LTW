@@ -9,7 +9,7 @@ export function initSocket(token: string) {
     socket = null;
   }
 
-  socket = io("http://localhost:8080", {
+  socket = io("http://localhost:3333", {
     auth: {
       token,
     },

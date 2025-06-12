@@ -3,7 +3,7 @@
 import type React from "react";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
-
+import { MainNav } from "@/components/main-nav";
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";

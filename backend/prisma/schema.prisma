@@ -11,11 +11,14 @@ model users {
   id               Int                @id @default(autoincrement())
   email            String             @unique
   password         String?
+  membership       String?            @default("basic") 
   isVerified       Boolean            @default(false)
   created_at       DateTime           @default(now())
   updated_at       DateTime           @updatedAt
   last_online_at   DateTime?
   is_online        Boolean            @default(false)
+
+  // Quan hệ từ cả 2 schema
   comments         comments[]
   connectionsA     connection[]       @relation("ConnectionA")
   connectionsB     connection[]       @relation("ConnectionB")
@@ -29,7 +32,12 @@ model users {
   likes            post_likes[]
   posts            posts[]
   profile          profile?
+
+  conversationsAsUser1 Conversation[] @relation("ConversationUser1")
+  conversationsAsUser2 Conversation[] @relation("ConversationUser2")
+  sentMessages         Message[]      @relation("MessageSender")
 }
+
 
 model otp {
   id        Int      @id @default(autoincrement())
@@ -164,4 +172,23 @@ model dating_plan {
 
   @@index([senderId])
   @@index([receiverId])
+}
+
+model Conversation {
+  id       Int       @id @default(autoincrement())
+  user1Id  Int
+  user2Id  Int
+  user1    users     @relation("ConversationUser1", fields: [user1Id], references: [id])
+  user2    users     @relation("ConversationUser2", fields: [user2Id], references: [id])
+  messages Message[] @relation("ConvoMessages")
+}
+
+model Message {
+  id             Int          @id @default(autoincrement())
+  conversationId Int
+  senderId       Int
+  content        String
+  timestamp      DateTime     @default(now())
+  conversation   Conversation @relation("ConvoMessages", fields: [conversationId], references: [id])
+  sender         users        @relation("MessageSender", fields: [senderId], references: [id])
 }

@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Users, MessageCircle, Heart, User, Video } from "lucide-react"
+import { Home, Users, MessageCircle, Heart, User, Video, Bot } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/components/language-provider"
@@ -42,12 +42,19 @@ export function MainNav({ className }: { className?: string }) {
       href: "/profile",
       icon: User,
     },
+    {
+      name: t("nav.advice"),
+      href: "/advice",
+      icon: Bot, 
+    },
   ]
 
   return (
     <nav className={cn("flex items-center space-x-4 lg:space-x-6", className)}>
       {navItems.map((item) => {
         const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
+        console.log("t(nav.advice):", t("nav.advice"))
+
 
         return (
           <Link

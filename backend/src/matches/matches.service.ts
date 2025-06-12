@@ -98,12 +98,32 @@ export class MatchesService {
     });
 
     if (reverseLike) {
-      await this.prisma.$transaction([
-        this.prisma.connection_queue.delete({ where: { id: reverseLike.id } }),
-        this.prisma.connection.create({
-          data: { userAId: senderId, userBId: receiverId },
-        }),
-      ]);
+       await this.prisma.$transaction([
+    this.prisma.connection_queue.delete({ where: { id: reverseLike.id } }),
+    this.prisma.connection.create({
+      data: { userAId: senderId, userBId: receiverId },
+    }),
+  ]);
+    // 1. Check if a conversation already exists between these two users
+const existingConversation = await this.prisma.conversation.findFirst({
+  where: {
+    OR: [
+      { user1Id: senderId, user2Id: receiverId },
+      { user1Id: receiverId, user2Id: senderId },
+    ],
+  },
+});
+
+// 2. Create conversation if not exists
+if (!existingConversation) {
+  await this.prisma.conversation.create({
+    data: {
+      user1Id: senderId,
+      user2Id: receiverId,
+    },
+  });
+}
+
     const sender = await this.prisma.profile.findUnique({ where: { userId: senderId }, select: { name: true } });
     const receiver = await this.prisma.profile.findUnique({ where: { userId: receiverId }, select: { name: true } });
 
@@ -158,7 +178,7 @@ export class MatchesService {
     await this.notificationService.create({
       userId: userId2,
       content: `${name} đã huỷ kết nối với bạn.`,
-      url: '/profile/${userId1}',
+      url: `/profile/${userId1}`,
       type: 'unmatched',
     });
   }

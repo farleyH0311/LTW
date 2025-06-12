@@ -40,6 +40,27 @@ export class UserService {
 
     return profile;
   }
+  async getFriends(userId: number) {
+  const connections = await this.prismaService.connection.findMany({
+    where: {
+      OR: [{ userAId: userId }, { userBId: userId }],
+    },
+    include: {
+      userA: { include: { profile: true } },
+      userB: { include: { profile: true } },
+    },
+  });
+
+  return connections.map(conn => {
+    const friend = conn.userAId === userId ? conn.userB : conn.userA;
+    return {
+      id: friend.id,
+      name: friend.profile?.name || `User ${friend.id}`,
+      avt: friend.profile?.avt || null,
+    };
+  });
+}
+
   async getProfileByIdProfile(id: number): Promise<any> {
     const profile = await this.prismaService.profile.findUnique({
       where: { id },

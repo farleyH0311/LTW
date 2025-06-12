@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  Bot,
   Calendar,
   Heart,
   Home,
@@ -73,6 +74,12 @@ export function AppNavigation() {
       icon: User,
       label: t("nav.profile"),
     },
+    {
+      href: "/advice",
+      icon: Bot,
+      label: t("nav.advice"),
+    },
+
   ];
 
   const handleTabClick = (href: string) => {

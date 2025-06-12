@@ -34,6 +34,7 @@ const translations = {
     "nav.dating": "Dating",
     "nav.calls": "Calls",
     "nav.profile": "Profile",
+    "nav.advice" : "AI advice",
     "nav.settings": "Settings",
     "nav.howItWorks": "How It Works",
     "nav.testimonials": "Success Stories",
@@ -205,6 +206,8 @@ const translations = {
     "messages.viewProfile": "View Profile",
     "messages.typeMessage": "Type a message...",
 
+    //Chatbot
+    "advice.title": "AI assistant",
     // Chat
     "chat.searchConversations": "Search conversations...",
     "chat.selectConversation": "Select a conversation",
@@ -322,6 +325,7 @@ const translations = {
     "nav.feed": "Bảng tin",
     "nav.matches": "Kết nối",
     "nav.messages": "Tin nhắn",
+    "nav.advice" : "Lời khuyên AI",
     "nav.dating": "Hẹn hò",
     "nav.calls": "Cuộc gọi",
     "nav.profile": "Hồ sơ",
@@ -453,6 +457,8 @@ const translations = {
     "dashboard.moodMatching": "Kết nối theo tâm trạng",
     "dashboard.virtualDatePlanner": "Lập kế hoạch hẹn hò ảo",
 
+    //chatbot
+    "advice.title": "Lời khuyên",
     // Profile
     "profile.back": "Quay lại",
     "profile.backToMatches": "Quay lại kết nối",

@@ -1,0 +1,43 @@
+version: '3.8'
+services:
+  backend:
+    build: ./backend
+    environment:
+      - DATABASE_URL=postgres://root:root@db:5432/app
+    command: sh -c "npx prisma migrate deploy && npm run start:prod"
+    ports:
+      - "3333"
+    depends_on:
+      - db
+    networks:
+      - app
+
+  db:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=app
+    volumes:
+      - ./db/data:/var/lib/postgresql/data/:rw
+    ports:
+      - "5432"
+    restart: unless-stopped
+    networks:
+      - app
+
+  frontend:
+    build: ./nginx
+    environment:
+      - NEXT_PUBLIC_BACKEND_URL=/api
+      - NEXT_PUBLIC_SOCKET_URL=http://backend:3333
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - app
+
+networks:
+  app:
+    driver: bridge

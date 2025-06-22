@@ -43,6 +43,7 @@ import { formatJoinedDate } from "../../../lib/formatdate";
 import { getProfileById } from "../../axios";
 import { getDetailText } from "../../test-personality/page";
 import { TraitKey } from "../../test-personality/question"
+import { getWalkingDistanceKm } from "@/app/utils/distance";
 
 export default function ProfilePage() {
   const { id } = useParams();
@@ -172,6 +173,42 @@ useEffect(() => {
 
   checkIncoming();
 }, [id, profile]);
+
+
+const [distanceKm, setDistanceKm] = useState<number | null>(null);
+
+useEffect(() => {
+  const fetchDistance = async () => {
+    const currentUserId = Cookies.get("userId");
+    if (!profile?.profile?.userId || !currentUserId) return;
+
+    const [me, them] = await Promise.all([
+      getProfileByUserId(currentUserId),
+      getProfileByUserId(profile.profile.userId),
+    ]);
+
+    if (
+      me?.lat != null &&
+      me?.lng != null &&
+      them?.lat != null &&
+      them?.lng != null
+    ) {
+      console.log("Có đủ tọa độ, đang tính khoảng cách...");
+      console.log("me:", me);
+      console.log("them:", them);
+      const km = await getWalkingDistanceKm(me.lat, me.lng, them.lat, them.lng);
+      console.log("Khoảng cách nhận được (km):", km);
+      setDistanceKm(km);
+    } else {
+      console.warn("Không đủ dữ liệu vị trí để tính khoảng cách:");
+      console.log("me:", me);
+      console.log("them:", them);
+    }
+
+  };
+
+  fetchDistance();
+}, [profile]);
 
   const userData = profile?.profile || {
     userId: "",
@@ -480,20 +517,37 @@ useEffect(() => {
                   {profile?.compatibility?.totalScore}% Match
                 </div>
               </div>
+
               <div className="flex items-center gap-1 text-muted-foreground text-xl">
                 <span>@{userData.account_name}</span>
               </div>
+
               <div className="mt-2 flex items-center gap-4 text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <MapPin className="h-4 w-4" />
                   <span>{userData.location}</span>
+              <span className="ml-2 text-sm text-muted-foreground">
+                {distanceKm !== null ? (
+                  distanceKm === 0 ? (
+                    "• Hai bạn đang bên cạnh nhau"
+                  ) : distanceKm >= 1 ? (
+                    `• Cách bạn khoảng ${distanceKm.toFixed(1)} km`
+                  ) : (
+                    `• Cách bạn khoảng ${(distanceKm * 1000).toFixed(0)} m`
+                  )
+                ) : (
+                  "• Không thể xác định khoảng cách"
+                )}
+              </span>
                 </div>
+
                 <div className="flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
                   <span>{formatJoinedDate(userData.created_at)}</span>
                 </div>
               </div>
             </div>
+
 
             <Tabs defaultValue="about">
               <TabsList>

@@ -136,4 +136,10 @@ export class PostsController {
   async getAllUserImages(@Param('id') userId: string) {
     return this.postService.getAllUserImages(Number(userId));
   }
+
+  @Get(':id')
+  async getPostById(@Param('id', ParseIntPipe) id: number) {
+    return this.postService.getPostById(id);
+  }
+
 }

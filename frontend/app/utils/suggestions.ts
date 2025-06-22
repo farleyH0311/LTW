@@ -10,7 +10,7 @@ export const interestMap: Record<string, { title: string; description: string; i
   Gaming: [{ title: "Chơi Mario Kart hoặc boardgame", description: "Thư giãn và vui vẻ", image: "/dates/gaming.jpg" }],
   Technology: [{ title: "Tham quan TechHub", description: "Khám phá công nghệ mới", image: "/dates/tech.jpg" }],
   Fashion: [{ title: "Đi shopping", description: "Khám phá style thời trang cùng nhau", image: "/dates/fashion.jpg" }],
-  Sports: [{ title: "Xem trận đấu thể thao", description: "Cổ vũ và ăn mừng cùng nhau", image: "/dates/sports.jpg" }],
+  Sports: [{ title: "Xem trận đấu thể thao", description: "Cổ vũ và ăn mừng cùng nhau", image: "/dates/sport.jpg" }],
   Hiking: [{ title: "Leo núi nhẹ hoặc dạo đồi", description: "Tận hưởng thiên nhiên", image: "/dates/hiking.jpg" }],
   Yoga: [{ title: "Tập yoga đôi", description: "Thư giãn tâm trí và cơ thể", image: "/dates/yoga.jpg" }],
   Dancing: [{ title: "Lớp nhảy salsa", description: "Nhảy và kết nối cảm xúc", image: "/dates/dancing.jpg" }],

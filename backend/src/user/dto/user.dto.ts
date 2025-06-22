@@ -5,6 +5,7 @@ import {
   IsString,
   IsInt,
   IsArray,
+  IsNumber,
 } from 'class-validator';
 
 export class CreateUserDto {
@@ -107,4 +108,12 @@ export class UpdateUserDto {
   @IsString()
   @IsOptional()
   avt?: string;
+
+  @IsOptional()
+  @IsNumber()
+  lat?: number;
+
+  @IsOptional()
+  @IsNumber()
+  lng?: number;
 }

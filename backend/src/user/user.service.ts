@@ -29,17 +29,39 @@ export class UserService {
     return createdProfile;
   }
 
-  async getProfile(userId: number): Promise<profile> {
-    const profile = await this.prismaService.profile.findUnique({
-      where: { userId },
-    });
-
-    if (!profile) {
-      throw new HttpException('Profile không tồn tại', HttpStatus.NOT_FOUND);
+async getProfile(userId: number): Promise<profile> {
+  const profile = await this.prismaService.profile.findUnique({
+    where: { userId },
+    select: {
+      id: true,
+      name: true,
+      age: true,
+      account_name: true,
+      gender: true,
+      location: true,
+      lat: true,          
+      lng: true,          
+      avt: true,
+      about_me: true,
+      occupation: true,
+      education: true,
+      height: true,
+      interests: true,
+      relationship_goals: true,
+      created_at: true,
+      updated_at: true,
+      userId: true,
     }
+  });
 
-    return profile;
+  if (!profile) {
+    throw new HttpException('Profile không tồn tại', HttpStatus.NOT_FOUND);
   }
+
+  return profile;
+}
+
+
   async getFriends(userId: number) {
   const connections = await this.prismaService.connection.findMany({
     where: {

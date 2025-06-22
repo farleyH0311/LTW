@@ -197,7 +197,7 @@ if (!existingConversation) {
     await this.notificationService.create({
       userId: senderId,
       content: `${name} đã từ chối kết nối với bạn.`,
-      url: '/profile/${userId1}',
+      url: `/profile/${receiverId}`,  
       type: 'rejected',
     });
   }
@@ -216,7 +216,7 @@ if (!existingConversation) {
     await this.notificationService.create({
       userId: receiverId,
       content: `${name} đã huỷ thích bạn.`,
-      url: '/profile/${userId1}',
+      url: `/profile/${senderId}`,
       type: 'cancel_like',
     });
   }

@@ -22,14 +22,12 @@ export class DatingService {
       },
     });
 
-    // Lấy tên người gửi
     const senderProfile = await this.prisma.profile.findUnique({
       where: { userId: data.senderId },
       select: { name: true },
     });
     const name = senderProfile?.name || 'Người dùng';
 
-    // Gửi thông báo cho người được mời
     await this.notificationService.create({
       userId: data.receiverId,
       content: `${name} đã gửi cho bạn một lời mời hẹn hò.`,
@@ -57,29 +55,56 @@ export class DatingService {
     });
   }
 
-  async updateDateStatus(dateId: number, status: string, updatedByUserId: number) {
+  async updateDateStatus(
+    dateId: number,
+    status: string,
+    updatedByUserId: number
+  ) {
     const date = await this.prisma.dating_plan.update({
       where: { id: dateId },
       data: { status },
+      select: {
+        id: true,
+        senderId: true,
+        receiverId: true,
+        sender: {
+          select: {
+            profile: {
+              select: { name: true },
+            },
+          },
+        },
+        receiver: {
+          select: {
+            profile: {
+              select: { name: true },
+            },
+          },
+        },
+      },
     });
 
-    const otherUserId = updatedByUserId === date.senderId
-      ? date.receiverId
-      : date.senderId;
+    const otherUserId =
+      updatedByUserId === date.senderId
+        ? date.receiverId
+        : date.senderId;
 
-    const updaterProfile = await this.prisma.profile.findUnique({
-      where: { userId: updatedByUserId },
-      select: { name: true },
-    });
-
-    const name = updaterProfile?.name || 'Người dùng';
+    const name =
+      updatedByUserId === date.senderId
+        ? date.sender.profile?.name ?? 'Người dùng'
+        : date.receiver.profile?.name ?? 'Người dùng';
 
     let content = '';
-    if (status === 'cancelled') {
-      content = `${name} đã huỷ cuộc hẹn.`;
-    } else if (status === 'accepted') {
+
+    if (status === 'rejected') {
+      content = `${name} đã từ chối cuộc hẹn.`;
+    } else if (status === 'confirmed') {
       content = `${name} đã chấp nhận lời mời hẹn hò.`;
     }
+
+    console.log('=== GỬI THÔNG BÁO ===');
+    console.log('status:', status);
+    console.log('content:', content);
 
     if (content) {
       await this.notificationService.create({
@@ -90,7 +115,7 @@ export class DatingService {
       });
     }
 
-    return date;
+    return { message: 'Cập nhật trạng thái thành công', status };
   }
 
 async rateDate(dateId: number, userId: number, rating: number) {

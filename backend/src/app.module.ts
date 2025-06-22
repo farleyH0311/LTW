@@ -29,6 +29,7 @@ import { CareScoreModule } from './suggest/care-score.module';
     ChatModule,
     VertexModule,
     CareScoreModule,
+    DatingModule,
   ],
   controllers: [AppController, PostsController],
   providers: [AppService, PostsService, PrismaService],

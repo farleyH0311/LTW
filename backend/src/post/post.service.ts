@@ -162,36 +162,73 @@ export class PostsService {
   }
 
     //cmt
-    async createComment(userId: number, body: CreateCommentDto) {
-      const postId = Number(body.postId);
+  async createComment(userId: number, body: CreateCommentDto) {
+    const postId = Number(body.postId);
 
-      if (isNaN(postId)) {
-        throw new BadRequestException('postId must be a valid number');
-      }
-
-      const comment = await this.prisma.comments.create({
-        data: {
-          userId,
-          postId: postId,
-          content: body.content,
-          parentCommentId: body.parentCommentId || null,
-        },
-        include: {
-          user: true,
-        },
-      });
-
-      await this.prisma.posts.update({
-        where: { id: postId },
-        data: {
-          comments_count: {
-            increment: 1,
-          },
-        },
-      });
-
-      return comment;
+    if (isNaN(postId)) {
+      throw new BadRequestException('postId must be a valid number');
     }
+
+    const comment = await this.prisma.comments.create({
+      data: {
+        userId,
+        postId: postId,
+        content: body.content,
+        parentCommentId: body.parentCommentId || null,
+      },
+      include: {
+        user: true,
+      },
+    });
+
+    const post = await this.prisma.posts.findUnique({
+      where: { id: postId },
+      select: { userId: true },
+    });
+
+    const commenterProfile = await this.prisma.profile.findUnique({
+      where: { userId },
+      select: { name: true },
+    });
+
+    const name = commenterProfile?.name || 'Người dùng';
+
+    if (post && post.userId !== userId) {
+      await this.notificationService.create({
+        userId: post.userId,
+        content: `${name} đã bình luận vào bài viết của bạn.`,
+        url: `/posts/${postId}`,
+        type: 'comment_post',
+      });
+    }
+
+    if (body.parentCommentId) {
+      const parent = await this.prisma.comments.findUnique({
+        where: { id: body.parentCommentId },
+        select: { userId: true },
+      });
+
+      if (parent && parent.userId !== userId) {
+        await this.notificationService.create({
+          userId: parent.userId,
+          content: `${name} đã phản hồi bình luận của bạn.`,
+          url: `/posts/${postId}`,
+          type: 'reply_comment',
+        });
+      }
+    }
+
+    await this.prisma.posts.update({
+      where: { id: postId },
+      data: {
+        comments_count: {
+          increment: 1,
+        },
+      },
+    });
+
+    return comment;
+  }
 
   async getCommentsByPost(postId: number) {
     return await this.prisma.comments.findMany({
@@ -378,4 +415,39 @@ export class PostsService {
         comment: updatedComment,
       };
     }
+
+    async getPostById(postId: number) {
+      const post = await this.prisma.posts.findUnique({
+        where: { id: postId },
+        include: {
+          user: {
+            select: {
+              profile: {
+                select: {
+                  name: true,
+                  avt: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!post) {
+        throw new NotFoundException('Không tìm thấy bài viết');
+      }
+
+      return {
+        id: post.id,
+        userId: post.userId,
+        content: post.content,
+        media_urls: post.media_urls,
+        createdAt: post.created_at,
+        author: {
+          name: post.user.profile?.name || 'Người dùng',
+          avt: post.user.profile?.avt || '',
+        },
+      };
+    }
+
   }

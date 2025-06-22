@@ -40,8 +40,11 @@ import {
   updatePost,
   deletePost,
   getAllProfiles,
+  updateProfile,
+  updateLocationOnly,
 } from "../../axios";
 import { formatJoinedDate } from "../../../lib/formatdate";
+import { AxiosError } from "axios";
 
 export default function FeedPage() {
   const router = useRouter();
@@ -67,7 +70,8 @@ export default function FeedPage() {
   const [profiles, setProfiles] = useState<UserData[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
-  const userId = Cookies.get("userId");
+  const userId = Number(Cookies.get("userId") || 0);
+
   interface UserData {
     id: number;
     userId: number;
@@ -240,6 +244,44 @@ export default function FeedPage() {
     }
   }
 
+useEffect(() => {
+  const updateLocationIfAllowed = () => {
+    const userId = Cookies.get("userId");
+    if (!userId || !navigator.geolocation) return;
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const lat = Number(position.coords.latitude);
+        const lng = Number(position.coords.longitude);
+
+        console.log(" Gửi updateLocationOnly với:", { lat, lng });
+
+        try {
+          await updateLocationOnly(+userId, lat, lng);
+          console.log("Đã cập nhật vị trí thành công");
+        } catch (err: unknown) {
+          const error = err as AxiosError;
+          if (error.response) {
+            console.error("Lỗi khi cập nhật vị trí:", error.response.data);
+          } else {
+            console.error("Lỗi không xác định:", error.message);
+          }
+        }
+      },
+      (error) => {
+        console.warn(" Người dùng từ chối chia sẻ vị trí:", error);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+      }
+    );
+  };
+
+  updateLocationIfAllowed();
+}, []);
+
+
   function handleRemoveImage(idx: number) {
     setRemovedImages((prev) => [...prev, idx]);
   }
@@ -387,30 +429,40 @@ export default function FeedPage() {
     }
   };
 
-  const handleSubmitComment = async (
-    postId: number,
-    userId: number,
-    parentCommentId: number | null = null,
-    commentContent: string
-  ) => {
-    try {
-      await createComment(postId, userId, commentContent, parentCommentId);
-      if (parentCommentId === null) {
-        setNewComment("");
-      } else {
-        setReplyContent("");
-        setReplyingToCommentId(null);
-      }
-      setPosts((prevPosts) =>
-        prevPosts.map((post) =>
-          post.id === postId ? { ...post, comments: post.comments + 1 } : post
-        )
-      );
-      fetchComments(postId);
-    } catch (err) {
-      console.error("Lỗi khi gửi bình luận", err);
+const handleSubmitComment = async (
+  postId: number,
+  userId: number,
+  parentCommentId: number | null = null,
+  commentContent: string
+) => {
+  try {
+    const safeParentCommentId =
+      typeof parentCommentId === "number" && Number.isInteger(parentCommentId)
+        ? parentCommentId
+        : undefined;
+
+    await createComment(postId, userId, commentContent, parentCommentId);
+
+
+    if (safeParentCommentId === undefined) {
+      setNewComment("");
+    } else {
+      setReplyContent("");
+      setReplyingToCommentId(null);
     }
-  };
+
+    setPosts((prevPosts) =>
+      prevPosts.map((post) =>
+        post.id === postId ? { ...post, comments: post.comments + 1 } : post
+      )
+    );
+
+    fetchComments(postId);
+  } catch (err) {
+    console.error("Lỗi khi gửi bình luận:", err);
+  }
+};
+
 
   const [isDeleting, setIsDeleting] = useState(false);
   function removeCommentAndReplies(
@@ -494,16 +546,25 @@ export default function FeedPage() {
     newContent: string
   ) => {
     try {
-      await updateComment(userId, commentId, { content: newContent });
-
-      await fetchComments(postId);
-
-      setEditingCommentId(null);
-      setEditContent("");
-    } catch (error) {
-      console.error("Lỗi khi sửa bình luận:", error);
+      await updateComment(
+    userId,
+    commentId,
+    {
+      id: commentId,         
+      userId: userId,       
+      content: newContent,   
     }
-  };
+  );
+
+
+    await fetchComments(postId);
+    setEditingCommentId(null);
+    setEditContent("");
+  } catch (error) {
+    console.error("Lỗi khi sửa bình luận:", error);
+  }
+};
+
   const [postFiles, setPostFiles] = useState<File[]>([]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -556,10 +617,8 @@ export default function FeedPage() {
             />
 
             <div className="flex-1">
-              <div className="bg-gray-100 rounded-lg px-3 py-2">
-                <p className="font-semibold text-sm">
-                  {comment.user.profile.name}
-                </p>
+              <div className="bg-muted text-foreground rounded-lg px-3 py-2">
+                <p className="font-semibold text-sm">{comment.user.profile.name}</p>
                 <p className="text-sm">{comment.content}</p>
               </div>
 

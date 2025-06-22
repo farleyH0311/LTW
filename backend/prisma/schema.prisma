@@ -55,7 +55,9 @@ model profile {
   account_name       String   @default("default")
   age                Int
   gender             String
-  location           String
+  location           String?
+  lat                Float?  
+  lng                Float?  
   about_me           String?
   occupation         String?
   education          String?

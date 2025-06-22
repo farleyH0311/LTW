@@ -7,6 +7,14 @@ import {
   markAllNotificationsAsRead,
 } from '../axios';
 import { useRouter } from 'next/navigation';
+import {
+  Bell,
+  Heart,
+  MessageCircle,
+  Calendar,
+  Info,
+} from 'lucide-react';
+import Cookies from "js-cookie";
 
 interface Notification {
   id: number;
@@ -14,7 +22,29 @@ interface Notification {
   url?: string;
   isRead: boolean;
   createdAt: string;
+  type?: string;
 }
+
+const getIconByType = (type: string | undefined) => {
+  switch (type) {
+    case 'like_post':
+    case 'waiting_match':
+    case 'match_success':
+      return <Heart className="w-4 h-4 text-pink-500" />;
+    case 'comment_post':
+      return <MessageCircle className="w-4 h-4 text-blue-500" />;
+    case 'reply_comment':
+      return <MessageCircle className="w-4 h-4 text-indigo-500" />;
+    case 'date_invitation':
+    case 'date_status':
+    case 'rate_date':
+      return <Calendar className="w-4 h-4 text-green-500" />;
+    case 'new_post':
+      return <Bell className="w-4 h-4 text-violet-500" />;
+    default:
+      return <Info className="w-4 h-4 text-gray-400" />;
+  }
+};
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -26,29 +56,57 @@ export default function NotificationsPage() {
   const router = useRouter();
   const observerRef = useRef<HTMLDivElement | null>(null);
 
-  const fetchMore = useCallback(async () => {
-    if (!userId || loading || !hasMore) return;
-    setLoading(true);
-    try {
-const res = await getNotificationsByUserId(userId, page);
-const newItems = res?.items || res || [];
-setNotifications((prev) => [...prev, ...newItems]);
+const fetchMore = async (customPage?: number) => {
+  const pageToFetch = customPage ?? page;
+  if (!userId || loading || !hasMore) return;
+  setLoading(true);
+  try {
+    const res = await getNotificationsByUserId(userId, pageToFetch);
+    const newItems = Array.isArray(res) ? res : res?.items || [];
 
-setHasMore(res?.page && res?.totalPages ? res.page < res.totalPages : false);
-console.log('[debug] notifications:', res?.items || res);
-      setPage((prev) => prev + 1);
-    } catch (err) {
-      console.error('Lỗi khi tải thông báo:', err);
-    } finally {
-      setLoading(false);
+    if (customPage === 1) {
+      setNotifications(newItems); // reset nếu là trang đầu
+    } else {
+      setNotifications((prev) => [...prev, ...newItems]);
     }
-  }, [userId, page, loading, hasMore]);
+
+    const more =
+      Array.isArray(res)
+        ? res.length > 0
+        : res?.page && res?.totalPages
+          ? res.page < res.totalPages
+          : false;
+
+    setHasMore(more);
+    setPage(pageToFetch + 1);
+  } catch (err) {
+    console.error("Lỗi khi tải thông báo:", err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
-    const storedId = localStorage.getItem('userId');
+  if (userId) {
+    fetchMore();
+  }
+}, [userId]);
+
+  useEffect(() => {
+    const storedId = Cookies.get("userId");
+    console.log("📦 Lấy userId từ cookie:", storedId);
     if (storedId) {
-      const uid = parseInt(storedId);
-      setUserId(uid);
+      const parsedId = parseInt(storedId);
+      if (!isNaN(parsedId)) {
+        setUserId(parsedId);
+        setPage(1);
+        setNotifications([]);
+        setHasMore(true);
+      } else {
+        console.warn("userId trong cookie không hợp lệ:", storedId);
+      }
+    } else {
+      console.warn("Không tìm thấy userId trong cookie.");
     }
   }, []);
 
@@ -86,75 +144,77 @@ console.log('[debug] notifications:', res?.items || res);
     }
   };
 
-    useEffect(() => {
-    if (userId) {
-        setPage(1);
-        setNotifications([]);
-        fetchMore();
-    }
-    }, [userId]);
-console.log('[ DEBUG notifications]:', notifications);
-
   return (
-  <div className="max-w-2xl mx-auto py-8 px-4">
-    <div className="flex items-center justify-between mb-6">
-    <button
-    onClick={() => window.history.back()}
-    className="px-4 py-2 rounded-xl text-white bg-transparent hover:bg-violet-600/20 transition-all duration-200 ease-in-out"
-    >← Quay lại</button>
-      <h1 className="text-2xl font-semibold text-center flex-1">
-        Thông báo của bạn
-      </h1>
-      <div className="w-[100px]" />
-    </div>
-    {notifications.length > 0 && (
-      <div className="mb-4 flex flex-wrap items-center gap-4">
+    <div className="max-w-2xl mx-auto py-8 px-4">
+      <div className="flex items-center justify-between mb-6">
         <button
-          onClick={handleMarkAll}
-          className="text-sm text-blue-500 hover:underline"
+          onClick={() => window.history.back()}
+          className="px-4 py-2 rounded-xl text-sm bg-muted hover:bg-accent transition"
         >
-          Đánh dấu tất cả là đã đọc
+          ← Quay lại
         </button>
-        <label className="flex items-center gap-2 text-sm text-muted-foreground">
-          <input
-            type="checkbox"
-            checked={showUnreadOnly}
-            onChange={(e) => setShowUnreadOnly(e.target.checked)}
-          />
-          Chỉ chưa đọc
-        </label>
+        <h1 className="text-xl font-semibold text-center flex-1 dark:text-white">
+          Thông báo của bạn
+        </h1>
+        <div className="w-[100px]" />
       </div>
-    )}
 
-      {!loading && notifications.length === 0 ? (
+      {notifications.length > 0 && (
+        <div className="mb-4 flex flex-wrap items-center gap-4">
+          <button
+            onClick={handleMarkAll}
+            className="text-sm text-blue-500 hover:underline"
+          >
+            Đánh dấu tất cả là đã đọc
+          </button>
+          <label className="flex items-center gap-2 text-sm text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={showUnreadOnly}
+              onChange={(e) => setShowUnreadOnly(e.target.checked)}
+            />
+            Chỉ chưa đọc
+          </label>
+        </div>
+      )}
+
+      {notifications.length === 0 && !loading ? (
         <p className="text-muted-foreground text-sm text-center">
           Không có thông báo nào.
         </p>
       ) : (
         <div className="space-y-2">
           {notifications
-            .filter(n => !showUnreadOnly || !n.isRead)
+            .filter((n) => !showUnreadOnly || !n.isRead)
             .map((n) => (
               <div
                 key={n.id}
                 onClick={() => handleClick(n.id, n.url)}
-                className={`p-4 rounded cursor-pointer border ${
-                  n.isRead ? 'bg-muted text-muted-foreground' : 'bg-background font-medium'
-                } hover:bg-accent transition`}
+                className={`p-4 rounded-lg border cursor-pointer flex gap-3 items-start ${
+                  n.isRead
+                    ? 'bg-muted text-muted-foreground'
+                    : 'bg-background hover:bg-accent font-medium'
+                } transition`}
               >
-                <p>{n.content}</p>
-                <p className="text-xs text-muted-foreground">
-                  {new Date(n.createdAt).toLocaleString()}
-                </p>
+                {getIconByType(n.type)}
+                <div className="flex-1 space-y-1">
+                  <p>{n.content}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(n.createdAt).toLocaleString()}
+                  </p>
+                </div>
               </div>
             ))}
 
           {loading && (
             <div className="space-y-2 mt-4">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="p-4 rounded border bg-muted animate-pulse space-y-2">
-                  <div className="h-4 bg-gray-300 rounded w-3/4" />
-                  <div className="h-3 bg-gray-300 rounded w-1/2" />
+                <div
+                  key={i}
+                  className="p-4 rounded border bg-muted animate-pulse space-y-2"
+                >
+                  <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-3/4" />
+                  <div className="h-3 bg-gray-300 dark:bg-gray-700 rounded w-1/2" />
                 </div>
               ))}
             </div>

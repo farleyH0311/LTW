@@ -123,6 +123,20 @@ export const updateProfile = async (id, profileData) => {
     throw error;
   }
 };
+
+export const updateLocationOnly = async (id, lat, lng) => {
+  try {
+    const response = await instance.put(`/api/users/${id}/location`, {
+      lat,
+      lng,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi cập nhật vị trí:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
 export const getProfileByUserId = async (userId) => {
   try {
     const response = await instance.get(`/api/users/${userId}/profile`);
@@ -254,63 +268,68 @@ export const createComment = async (
   parentCommentId
 ) => {
   try {
-    const response = await instance.post(`/api/posts/${postId}/comments`, {
-      userId,
-      content,
-      parentCommentId: parentCommentId ?? null,
-      postId,
-    });
+    const parsedParentId = Number(parentCommentId);
 
+    const body = {
+      userId: Number(userId),
+      postId: Number(postId),
+      content: content.trim(),
+      ...(Number.isInteger(parsedParentId) && !isNaN(parsedParentId)
+        ? { parentCommentId: parsedParentId }
+        : {}),
+    };
+
+    console.log("Body gửi đi:", JSON.stringify(body));
+
+    const response = await instance.post(`/api/posts/${postId}/comments`, body);
     return response.data;
   } catch (error) {
     console.error(
       "Lỗi khi tạo bình luận:",
-      error?.response?.data || error.message
+      JSON.stringify(error?.response?.data, null, 2) || error.message
     );
     throw error;
   }
 };
+
 export const getCommentsByPost = async (postId) => {
   try {
-    const res = await instance.get(`/api/posts/${postId}/comments`);
+    const res = await instance.get(`/api/posts/${Number(postId)}/comments`);
     return res.data;
   } catch (error) {
-    console.error(
-      "Lỗi khi lấy bình luận:",
-      error?.response?.data || error.message
-    );
+    console.error("Lỗi khi lấy bình luận:", JSON.stringify(error?.response?.data || error.message));
     throw error;
   }
 };
+
 export const updateComment = async (userId, commentId, data) => {
   try {
     const res = await instance.put(
-      `/api/posts/${userId}/${commentId}/comments`,
-      data
+      `/api/posts/${Number(userId)}/${Number(commentId)}/comments`,
+      {
+        ...data,
+        id: Number(data.id),
+        userId: Number(data.userId),
+      }
     );
     return res.data;
   } catch (error) {
-    console.error(
-      "Lỗi khi sửa bình luận:",
-      error?.response?.data || error.message
-    );
+    console.error("Lỗi khi sửa bình luận:", JSON.stringify(error?.response?.data || error.message));
     throw error;
   }
 };
+
+
 export const deleteComment = async (userId, commentId) => {
   try {
-    const res = await instance.delete(
-      `/api/posts/${userId}/${commentId}/comments`
-    );
+    const res = await instance.delete(`/api/posts/${userId}/${commentId}/comments`);
     return res.data;
   } catch (error) {
-    console.error(
-      "Lỗi khi xóa bình luận:",
-      error?.response?.data || error.message
-    );
+    console.error("Lỗi khi xóa bình luận:", JSON.stringify(error?.response?.data || error.message));
     throw error;
   }
 };
+
 export const deletePost = async (userId, postId) => {
   try {
     const res = await instance.delete(`/api/posts/${userId}/${postId}`);
@@ -332,6 +351,26 @@ export const updatePost = async (userId, postId, data) => {
       "Lỗi khi sửa bài viết:",
       error?.response?.data || error.message
     );
+    throw error;
+  }
+};
+
+export const getPostById = async (postId) => {
+  try {
+    const response = await instance.get(`/api/posts/${postId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi lấy bài viết theo ID:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const toggleLikePost = async (postId, userId) => {
+  try {
+    const res = await instance.post(`/api/posts/${postId}/like`, { userId });
+    return res.data;
+  } catch (error) {
+    console.error("Lỗi khi like bài viết:", error.response?.data || error.message);
     throw error;
   }
 };
@@ -679,5 +718,6 @@ export const sendNotification = async ({ userId, content, url = "", type = "info
     throw error;
   }
 };
+
 export { instance };
 export { axios };

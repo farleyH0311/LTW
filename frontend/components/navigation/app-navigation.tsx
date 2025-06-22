@@ -12,6 +12,7 @@ import {
   LogOut,
   MessageSquare,
   User,
+  Bell,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { logout } from "../,,/../../app/axios";
@@ -79,6 +80,11 @@ export function AppNavigation() {
       icon: Bot,
       label: t("nav.advice"),
     },
+    {
+      href: "/notifications",
+      icon: Bell,
+      label: "Thông báo", 
+    }
 
   ];
 
@@ -127,11 +133,6 @@ export function AppNavigation() {
         ))}
       </div>
       <div className="flex items-center gap-4">
-      {userId && (
-        <div className="hidden lg:flex items-center">
-          <NotificationBell />
-        </div>
-      )}
         <Button
           variant="outline"
           size="lg"

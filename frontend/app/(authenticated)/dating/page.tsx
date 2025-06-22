@@ -284,44 +284,50 @@ const filteredSuggestions = suggestedDates.filter((date) => {
                       }
                     }}
                   >
-      <SelectTrigger className="w-[120px] bg-violet-600 text-white text-sm hover:bg-violet-700 border-none rounded-md">
-        <SelectValue placeholder="Plan a date" />
-      </SelectTrigger>
-      <SelectContent className="max-h-60 overflow-y-auto">
-        {matched.map((m) => {
-          const name = m.profile.name ?? "Không rõ";
-          return (
-            <div
-              key={m.profile.userId}
-              className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-accent rounded-md"
-              onClick={() => {
-                setSelectedUserId(m.profile.userId.toString());
-                setSelectedUserName(name);
-                setShowDatePlanner(true);
-              }}
-            >
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={m.profile.avt || "/placeholder.svg"} alt={name} />
-                <AvatarFallback>{name[0]}</AvatarFallback>
-              </Avatar>
-              <span className="text-sm text-white font-medium">{name}</span>
+                  </Select>
+              <Select>
+                <SelectTrigger className="min-w-[160px] px-3 py-2 bg-violet-600 text-white text-sm hover:bg-violet-700 border-none rounded-md flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  <SelectValue placeholder="Plan a date" />
+                </SelectTrigger>
+
+                <SelectContent className="max-h-60 overflow-y-auto">
+                  {matched.map((m) => {
+                    const name = m.profile.name ?? "Không rõ";
+                    return (
+                      <div
+                        key={m.profile.userId}
+                        className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-accent rounded-md"
+                        onClick={() => {
+                          setSelectedUserId(m.profile.userId.toString());
+                          setSelectedUserName(name);
+                          setShowDatePlanner(true);
+                        }}
+                      >
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={m.profile.avt || "/placeholder.svg"} alt={name} />
+                          <AvatarFallback>{name[0]}</AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm font-medium text-gray-800 dark:text-white">
+                          {name}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+              {selectedUserName && (
+                <p className="gap-1 text-sm bg-violet-600 hover:bg-violet-700 text-white flex-1 sm:flex-none">
+                  Plan a date with:{" "}
+                  <span className="text-accent">{selectedUserName}</span>
+                </p>
+              )}
             </div>
-          );
-        })}
-      </SelectContent>
-    </Select>
-        {selectedUserName && (
-          <p className="gap-1 text-sm bg-violet-600 hover:bg-violet-700 text-white flex-1 sm:flex-none">
-            Plan a date with:{" "}
-            <span className="text-accent">{selectedUserName}</span>
-          </p>
-        )}
-      </div>
-    ) : (
-      <p className="text-muted-foreground text-sm text-center">
-        You don't have anybody to date.
-      </p>
-    )}
+          ) : (
+            <p className="text-muted-foreground text-sm text-center">
+              You don't have anybody to date.
+            </p>
+          )}
         </div>
           <Tabs defaultValue="upcoming" onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-3 mb-6">

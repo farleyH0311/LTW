@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Calendar, Heart, Home, LayoutDashboard, LogOut, MessageSquare, User } from "lucide-react"
+import { Calendar, Heart, Home, LayoutDashboard, LogOut, MessageSquare, User, Bell } from "lucide-react"
 import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "../language-provider"
@@ -55,6 +55,12 @@ export function MobileNavigation() {
       label: t("nav.profile"),
       icon: User,
     },
+    {
+      href: "/notifications",
+      label: "Thông báo",
+      icon: Bell,
+    }
+
   ]
 
   const handleLogout = () => {
@@ -64,12 +70,6 @@ export function MobileNavigation() {
 
   return (
     <>
-{userId && (
-  <div className="fixed top-4 right-4 z-50 lg:hidden">
-    <NotificationBell />
-
-  </div>
-)}
       <Sheet>
         <SheetTrigger asChild>
           <Button 

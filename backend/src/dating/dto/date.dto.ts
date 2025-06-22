@@ -22,8 +22,8 @@ export class CreateDateDto {
 }
 
 export class UpdateDateStatusDto {
-  @IsIn(['pending', 'confirmed', 'rejected'])
-  status: 'pending' | 'confirmed' | 'rejected';
+  @IsIn(['pending', 'confirmed', 'rejected', 'accepted', 'cancelled'])
+  status: 'pending' | 'confirmed' | 'rejected' | 'accepted' | 'cancelled';
 }
 
 export class RateDateDto {

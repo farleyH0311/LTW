@@ -80,4 +80,13 @@ export class UserController {
     const id = parseInt(profileId, 10);
     return this.userService.getUserIdByProfileId(id);
   }
+
+  @Put(':id/location')
+  async updateLocationOnly(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: { lat: number; lng: number }
+  ): Promise<profile> {
+    return this.userService.updateProfile(id, body); 
+  }
+
 }

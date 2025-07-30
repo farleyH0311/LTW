@@ -1,3 +1,290 @@
-Lưu ý: chưa phải bản production, đây là bản dev
-Bản này dành cho việc test thử các tính năng ở máy local
-Bản production sẽ được push lên sau
+# Harmonia – Find Your Perfect Match
+
+**Harmonia** là nền tảng mạng xã hội cảm xúc, được thiết kế nhằm **kết nối người với người tạo ra những mối quan hệ tình yêu và tình bạn đích thực**. Với sự kết hợp giữa **AI hiện đại**, **thuật toán phân tích đa chiều** và **trải nghiệm tương tác thú vị**, Harmonia mang đến một không gian an toàn, nhẹ nhàng và gần gũi – nơi những tâm hồn đồng điệu có thể tìm thấy nhau.
+
+🌐 Truy cập bản chính thức tại: [https://harmonia.id.vn]
+🌐 Link video trải nghiệm người dùng: [https://vt.tiktok.com/ZSk3nUrCC/]
+🌐 Link video demo chức năng: [https://drive.google.com/drive/folders/1GqZ1LglnPMA4waL7Enq3Zh0PY5Fe6EDF?usp=drive_link]
+
+---
+
+## Tính năng nổi bật
+
+1. **Xác thực và đăng nhập đa dạng**: Hỗ trợ cả đăng ký email truyền thống và Google OAuth.
+2. **Tạo hồ sơ cá nhân chi tiết**: Khai báo tuổi, chiều cao, sở thích, mục tiêu tình cảm để tăng độ chính xác gợi ý.
+3. **Mạng xã hội nội bộ**: Viết bài, đăng ảnh và tương tác với người khác tự nhiên như một mạng xã hội thực thụ.
+4. **Trắc nghiệm tính cách Big Five (OCEAN)**: Hiểu sâu bản thân để gợi ý người phù hợp.
+5. **Bộ lọc và tìm kiếm linh hoạt**: Dễ dàng tìm kiếm người phù hợp theo tiêu chí cá nhân.
+6. **Gợi ý ghép đôi thông minh bằng AI**: Gợi ý những người có điểm tương thích cao dựa trên tính cách, mục tiêu và sở thích.
+7. **Nhắn tin sau khi ghép đôi thành công**: Chỉ có thể nhắn tin khi cả hai cùng quan tâm, đảm bảo sự tôn trọng và an toàn.
+8. **AI gợi ý trả lời tin nhắn**: Phản hồi thông minh, tự nhiên giảm bớt sự lúng túng.
+9. **Chatbot cố vấn cảm xúc**: Đưa ra lời khuyên, đánh giá mức độ quan tâm từ đối phương.
+10. **Lập kế hoạch hẹn hò**: Lập địa điểm, hoạt động, lịch trình sau khi kết đôi (Hướng phát triển: phân tích và gợi ý địa điểm hẹn hò dựa trên AI)
+
+---
+
+## Kiến trúc & cấu trúc dự án
+
+Phần backend được xây dựng bằng NestJS, còn frontend là một ứng dụng React.js kết hợp Nextjs. Nginx đóng vai trò làm reverse proxy và đồng thời phục vụ giao diện người dùng. Cơ sở dữ liệu sử dụng là PostgreSQL. Toàn bộ ứng dụng được đóng gói bằng Docker để triển khai dễ dàng và nhất quán.
+
+## Đây là cây thư mục của đồ án:
+```
+├── backend                         # Backend của ứng dụng được xây dựng bằng NestJS
+│   ├── Dockerfile                 # Cấu hình Docker để build image backend
+│   ├── eslint.config.mjs         # Cấu hình linting
+│   ├── nest-cli.json             # Cấu hình NestJS CLI
+│   ├── package*.json             # Quản lý dependencies backend
+│   ├── prisma/                   # Thư mục quản lý schema và migrations của Prisma ORM
+│   │   ├── migrations/           # Lưu các bản ghi thay đổi cấu trúc DB
+│   │   └── schema.prisma         # Định nghĩa mô hình dữ liệu PostgreSQL
+│   ├── src/                      # Source code chính của backend
+│   │   ├── app.*                 # Entry point và service chính của hệ thống
+│   │   ├── auth/                 # Xử lý xác thực, Google OAuth, guard, DTOs
+│   │   ├── chat/                 # API và logic nhắn tin giữa người dùng
+│   │   ├── dating/               # Thuật toán và API gợi ý kế hoạch hẹn hò
+│   │   ├── email/                # Gửi email xác thực và thông báo
+│   │   ├── matches/              # Xử lý ghép đôi và lưu lịch sử kết nối
+│   │   ├── notification/         # Quản lý thông báo real-time (đang lỗi)
+│   │   ├── personality-test/     # API trắc nghiệm tính cách Big Five
+│   │   ├── post/                 # CRUD bài đăng người dùng (ảnh, caption, bình luận)
+│   │   ├── suggest/              # AI: Gợi ý trả lời, đánh giá mức độ quan tâm
+│   │   ├── user/                 # Quản lý người dùng, gateway, socket
+│   │   ├── vertex/               # Tích hợp Vertex AI để gọi AI model (không enable được service này nên phải chuyển qua dùng gemini AI)
+│   │   └── prisma.*              # Kết nối Prisma Service & Module
+│   ├── test/                     # Kiểm thử 
+│   ├── tsconfig*.json            # Cấu hình TypeScript cho backend
+
+├── db/
+│   └── data/                     # Thư mục chứa dữ liệu volume (sử dụng cho dev/local)
+
+├── docker-compose.yml            # Cấu hình tổng thể để chạy toàn bộ hệ thống (backend, frontend, database, nginx)
+.
+├── Dockerfile                        # File cấu hình để build frontend thành image Docker
+└── frontend/                         # Thư mục chính chứa toàn bộ mã nguồn frontend
+    ├── app/                          # Next.js App Router: chứa toàn bộ route và trang giao diện người dùng
+    │   ├── (authenticated)/         # Các trang yêu cầu đăng nhập: dashboard, feed, matches,...
+    │   ├── advice/                  # Chatbot AI đưa lời khuyên cảm xúc
+    │   ├── axios.js                 # Cấu hình Axios để gọi API backend với token
+    │   ├── calls/                   # Trang cuộc gọi video/audio (Agora hoặc WebRTC)
+    │   ├── chat/                    # Giao diện chat real-time
+    │   ├── forgot-password/         # Trang khôi phục mật khẩu
+    │   ├── globals.css              # Tệp CSS toàn cục
+    │   ├── how-it-works/            # Trang giới thiệu cách nền tảng hoạt động
+    │   ├── layout.tsx               # Layout mặc định dùng cho toàn bộ app
+    │   ├── login/                   # Giao diện đăng nhập
+    │   ├── messages/                # Giao diện chi tiết tin nhắn
+    │   ├── notifications/           # Trung tâm thông báo của người dùng
+    │   ├── page.tsx                 # Trang chủ
+    │   ├── profile/                 # Hồ sơ người dùng, tạo và cập nhật thông tin
+    │   ├── register/                # Trang đăng ký, bao gồm Google OAuth
+    │   ├── routes.tsx               # Danh sách định tuyến nội bộ
+    │   ├── settings/                # Giao diện cài đặt cá nhân
+    │   ├── socket.ts                # Cấu hình kết nối WebSocket client
+    │   ├── success-stories/         # Các câu chuyện thành công sau khi ghép đôi
+    │   ├── test-personality/        # Bài kiểm tra tính cách Big Five (OCEAN)
+    │   ├── users/                   # Danh sách người dùng, trang cá nhân công khai
+    │   └── utils/                   # Hàm tiện ích nội bộ (gợi ý AI,...)
+
+    ├── components/                  # Bộ component tái sử dụng trong toàn ứng dụng
+    │   ├── ChatSuggestion.tsx       # Gợi ý tin nhắn từ AI
+    │   ├── InterestBar.tsx          # Hiển thị mức độ quan tâm giữa hai người dùng
+    │   ├── NotificationBell.tsx     # Biểu tượng chuông thông báo
+    │   ├── SocketClient.tsx         # Cấu hình nhận socket real-time client
+    │   ├── compatibility-chart.tsx  # Biểu đồ tương thích tính cách giữa người dùng
+    │   ├── daily-recommendation.tsx # Gợi ý kết nối hàng ngày
+    │   ├── interactive/             # Hiệu ứng 3D: heart, story animation,...
+    │   ├── language-provider.tsx    # Ngữ cảnh ngôn ngữ (đa ngôn ngữ)
+    │   ├── language-switcher.tsx    # Bộ chuyển đổi ngôn ngữ
+    │   ├── logout-button.tsx        # Nút đăng xuất
+    │   ├── main-nav.tsx             # Navigation chính
+    │   ├── mobile-nav.tsx           # Navigation cho thiết bị di động
+    │   ├── navigation/              # Các thành phần điều hướng phụ trợ
+    │   ├── personality-radar-chart.tsx # Biểu đồ radar tính cách
+    │   ├── profile/                 # Các thành phần trong hồ sơ: avatar, AI image
+    │   ├── test.tsx                 # File test thử component (demo layout)
+    │   ├── theme-provider.tsx       # Cấu hình chủ đề light/dark
+    │   ├── theme-toggle.tsx         # Nút chuyển chủ đề
+    │   ├── ui/                      # Các component UI chuẩn hóa (button, input, modal, toast,...)
+    │   ├── ui-effects/              # Các hiệu ứng giao diện (confetti, background, ring,...)
+    │   └── virtual-date-planner.tsx # Trình lập kế hoạch hẹn hò thông minh
+
+    ├── components.json              # Danh sách export component (nếu dùng auto import)
+    ├── contexts/                    # Context API để chia sẻ trạng thái toàn ứng dụng
+    │   └── AuthContext.tsx          # Quản lý trạng thái xác thực người dùng
+
+    ├── hooks/                       # Các custom React hook tiện ích
+    │   ├── use-mobile.tsx          
+    │   └── use-toast.ts             
+
+    ├── lib/                         # Thư viện xử lý logic client
+    │   ├── formatdate.js           
+    │   └── utils.ts                 
+
+    ├── next-env.d.ts                # Cấu hình môi trường TypeScript cho Next.js
+    ├── next.config.mjs              # Cấu hình dự án Next.js
+    ├── package*.json                # Quản lý dependencies frontend
+    ├── pnpm-lock.yaml               # File lock nếu dùng pnpm
+    ├── postcss.config.mjs           # Cấu hình PostCSS (kết hợp Tailwind)
+    ├── public/                      # Tài nguyên tĩnh: ảnh logo, người dùng mặc định,...
+    │   ├── favicon.ico, placeholder-user.jpg, ...
+    ├── styles/                      # CSS tuỳ chỉnh toàn ứng dụng
+    │   └── globals.css
+    ├── tailwind.config.ts           # Cấu hình thiết kế Tailwind: theme, màu sắc,...
+    └── tsconfig.json                # Cấu hình TypeScript
+
+
+├── package.json                  # Root package cho các script và quản lý dependencies 
+└── package-lock.json            # File khoá phiên bản phụ thuộc
+
+```
+
+
+## 🚀 Hướng dẫn Build & Chạy Dự Án
+
+### 🧰 Yêu cầu trước khi bắt đầu
+
+- Đã cài đặt **Docker** và **Docker Compose**
+- Đảm bảo các cổng sau không bị chiếm dụng:
+  - `80` cho Nginx (frontend)
+  - `5432` cho PostgreSQL (database)
+
+---
+
+### ⚙️ Các bước triển khai
+
+#### 1. Clone dự án
+
+```bash
+git clone --branch production https://github.com/fuondai/NT208.P22.ANTT_Web-application-development.git
+```
+
+---
+
+#### 2. Phát triển frontend (chạy riêng)
+
+Do cấu trúc hiện tại đặt frontend bên trong `nginx/frontend/`, nếu phát triển giao diện và xem live changes, hãy chạy riêng dev server của frontend như sau:
+
+```bash
+cd nginx/frontend
+npm install         # Cài dependencies
+npm run dev         
+```
+cd backend
+```bash
+npm install
+npm run start:dev
+```
+
+
+---
+
+### 🐳 Build & chạy toàn bộ hệ thống bằng Docker Compose
+
+#### 1. Chạy build đầy đủ:
+
+```bash
+docker compose down -v   # Xóa container cũ và volume
+docker compose up --build
+```
+
+Lệnh trên sẽ thực hiện:
+
+- Build image Docker cho backend và Nginx (dựa trên Dockerfile tương ứng)
+- Pull image PostgreSQL (`postgres:13`)
+- Khởi tạo toàn bộ container
+- Backend sẽ kết nối đến PostgreSQL
+- Nginx đóng vai trò reverse proxy và phục vụ frontend
+
+Sau khi hoàn tất, truy cập ứng dụng tại: [http://localhost:3000]
+
+---
+
+### 🧩 Chạy lại ứng dụng (không cần rebuild)
+
+Nếu đã build trước đó và chỉ muốn khởi động lại containers:
+
+```bash
+docker compose up
+```
+
+---
+
+### 🛑 Dừng toàn bộ container
+
+Để tắt ứng dụng:
+
+```bash
+docker compose down
+```
+
+Nếu muốn xóa luôn dữ liệu (volume PostgreSQL), chạy:
+
+```bash
+docker compose down -v
+docker rm -f $(docker ps -aq)
+
+```
+
+## 🌐 Phương thức Deploy
+
+Hệ thống được triển khai sử dụng **máy ảo Google Cloud** (Google Cloud Compute Engine):
+
+- Cấu hình firewall mở cổng 80 (HTTP) và 443 (HTTPS)
+- Triển khai thông qua **Docker Compose** trên máy ảo Linux (Debian)
+- Toàn bộ backend, frontend và PostgreSQL đều chạy trong container riêng biệt, được reverse proxy bởi Nginx
+
+
+### ☁️ Quản lý truy cập & tên miền với Cloudflare
+
+- **Quản lý tên miền**:  
+  Dịch vụ tên miền harmonia.id.vn được trỏ tới IP máy ảo trên Google Cloud thông qua Cloudflare bằng **A Record**.  
+  Cloudflare đóng vai trò trung gian giúp:
+  - Ẩn địa chỉ IP gốc 
+  - Tăng tốc phân giải DNS 
+  - Xem thống kê **lượt truy cập**, **số lượng request**
+  - Thiết lập **bảo vệ chống DDoS**, rate limiting và firewall rules
+ 
+
+## Thành viên & Phân công công việc
+Cả nhóm: 
+- Chọn đề tài, framework, công nghệ, hướng phát triển.
+- Chọn các chức năng cần có của trang web.
+
+### 1. **Kim Thái Vi Anh** – `23520045`
+- Phát triển **backend** cho các chức năng:
+  - Chat real-time  
+  - Gợi ý tin nhắn  
+  - Chatbot AI đưa ra lời khuyên cảm xúc
+- Xây dựng **frontend/UI** tương ứng với các chức năng đã phát triển
+- Thiết lập **Docker**, cấu hình deploy toàn bộ hệ thống
+- Quản lý triển khai, duy trì hoạt động website chính thức
+
+---
+
+### 2. **Mai Thị Quỳnh Châu** – `23520170`
+- Phát triển **backend** cho các chức năng:
+  - Đăng ký / đăng nhập người dùng
+  - Tạo & cập nhật hồ sơ cá nhân
+  - Đăng bài, tương tác như mạng xã hội thực thụ
+  - Lọc hồ sơ theo nhu cầu kết nối
+  - Thuật toán gợi ý ghép đôi dựa trên điểm tương thích
+  - Bài trắc nghiệm **Big Five (OCEAN)** 
+- Xây dựng **frontend/UI** tương ứng với các chức năng đã phát triển
+
+---
+
+### 3. **Phạm Võ Khánh Hà** – `23520414`
+- Phát triển **backend** cho các chức năng:
+  - Ghép đôi (like/dislike/unmatch/accept... giữa người dùng)
+  - Chỉnh sửa thuật toán gợi ý ghép đôi cho phù hợp
+  - Lập kế hoạch hẹn hò (virtual date planner)
+  - Hệ thống **thông báo** cho người dùng
+  - GPS định vị và tính khoảng cách người dùng
+  - Dating Map (Bản đồ lựa chọn địa điểm)
+- Xây dựng **frontend/UI** tương ứng với các chức năng đã phát triển
+- Làm video.
+---
+
+
+
+
